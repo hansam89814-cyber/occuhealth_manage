@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>건강진단 사후관리 출력 프로그램</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:"Noto Sans CJK KR","Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;margin:0;background:#e9ecf0;color:#1d1d1f;font-size:14px}
+/* ---------- 편집 화면 ---------- */
+.bar{position:sticky;top:0;z-index:5;background:#1d3557;color:#fff;padding:8px 10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bar b{margin-right:6px}
+.bar select,.bar button,.bar label.btn{font:inherit;font-size:13px;padding:6px 10px;border-radius:6px;border:0;cursor:pointer}
+.bar button,.bar label.btn{background:#fff;color:#1d3557}
+.bar button.pri{background:#f4a261;color:#1d1d1f;font-weight:700}
+.bar button.del{background:#e76f51;color:#fff}
+.wrap{display:flex;gap:12px;padding:12px;align-items:flex-start}
+.form{width:420px;flex-shrink:0;background:#fff;border-radius:10px;padding:12px;max-height:calc(100vh - 70px);overflow:auto;position:sticky;top:58px}
+.form h3{font-size:14px;margin:14px 0 6px;color:#1d3557;border-bottom:1px solid #dde1e6;padding-bottom:3px}
+.form h3:first-child{margin-top:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.row.three{grid-template-columns:1fr 1fr 1fr}
+.row.one{grid-template-columns:1fr}
+.f label{display:block;font-size:11.5px;color:#555;margin-bottom:2px}
+.f input,.f select,.f textarea{width:100%;font:inherit;font-size:13px;padding:5px 6px;border:1px solid #c5ccd4;border-radius:5px}
+.f textarea{min-height:60px;resize:vertical}
+.hz{border:1px solid #dde1e6;border-radius:6px;padding:6px;margin-bottom:6px;background:#fafbfc}
+.hz .row{margin-bottom:4px}
+.small-btn{font:inherit;font-size:12px;padding:4px 8px;border:1px solid #c5ccd4;border-radius:5px;background:#fff;cursor:pointer}
+.hear{display:grid;grid-template-columns:34px repeat(6,1fr);gap:3px;align-items:center;font-size:11px}
+.hear input{padding:3px;font-size:12px;text-align:center}
+.photos-in{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.photos-in .ph{border:1px dashed #b8bec6;border-radius:6px;padding:4px;font-size:11px}
+.photos-in img{width:100%;height:70px;object-fit:cover;border-radius:4px;display:block}
+.hint{font-size:11.5px;color:#777;margin:4px 0}
+.preview{flex:1;overflow:auto}
+.scaler{transform-origin:top left}
+/* ---------- A4 출력 ---------- */
+.page{width:210mm;height:297mm;padding:9mm 10mm;background:#fff;margin:0 auto 14px;box-shadow:0 2px 10px rgba(0,0,0,.15);overflow:hidden;position:relative;font-size:9.3pt;line-height:1.38}
+.page table{border-collapse:collapse;width:100%}
+.page td,.page th{border:1px solid #b8bec6;padding:3px 5px;vertical-align:middle}
+.page th{background:#eef1f5;font-weight:600;white-space:nowrap}
+.ph1{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #1d3557;padding-bottom:5px;margin-bottom:7px}
+.ph1 h1{font-size:15pt;margin:0}
+.sub{font-size:8.3pt;color:#555}
+.sec{font-size:10.3pt;font-weight:700;color:#1d3557;margin:8px 0 4px;border-left:4px solid #1d3557;padding-left:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.verdict{display:flex;gap:6px}
+.vbox{flex:1;border:1.5px solid #b8bec6;border-radius:4px;padding:5px;text-align:center}
+.vbox .k{font-size:7.8pt;color:#555}.vbox .v{font-size:16pt;font-weight:800;line-height:1.25}.vbox .d{font-size:7.4pt;color:#333}
+.vbox.ok{border-color:#7fb88b;background:#f1f9f2}.vbox.ok .v{color:#2a7a3b}
+.vbox.warn{border-color:#e9a23b;background:#fff8ec}.vbox.warn .v{color:#b86e00}
+.vbox.bad{border-color:#c0392b;background:#fdeeee}.vbox.bad .v{color:#c0392b}
+.vbox .v.txt{font-size:10.5pt;padding:4px 0}
+.tag{display:inline-block;padding:0 6px;border-radius:3px;font-weight:700;font-size:8.5pt}
+.tA{background:#e3f3e6;color:#2a7a3b}.tC{background:#fff1d6;color:#b86e00}.tD{background:#fde2df;color:#c0392b}.tX{background:#eceef1;color:#555}
+.mbar{position:relative;height:13px;background:#f1f3f6;border-radius:2px;margin:2px 0}
+.mbar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px}
+.mbar b{position:absolute;top:-2px;bottom:-2px;width:2px;background:#1d3557}
+.mbar span{position:absolute;right:4px;top:-1px;font-size:8pt;font-weight:700}
+.lbl{display:flex;justify-content:space-between;font-size:8pt}
+.page ul{margin:2px 0;padding-left:16px}.page li{margin:1.5px 0}
+.mini{font-size:7.5pt;color:#666}
+.foot{position:absolute;left:10mm;right:10mm;bottom:6mm;font-size:7.3pt;color:#888;display:flex;justify-content:space-between;border-top:1px solid #e1e4e8;padding-top:3px}
+/* page2 */
+.dz{display:grid;grid-template-columns:62px 1fr 1fr;gap:8px;border:1.5px solid #dde1e6;border-radius:6px;padding:6px 8px;margin-bottom:6px;align-items:start}
+.dz.hi{border-color:#e9a23b;background:#fffaf1}.dz.hd{border-color:#c0392b;background:#fff5f4}
+.dz .ic{text-align:center;font-size:8pt;font-weight:700}
+.dz h4{margin:0 0 2px;font-size:10pt}
+.dz .dis{font-weight:700;color:#8a2c1f}
+.dz .sym{font-size:8pt;color:#555;margin-top:2px}
+.dz .pv{font-size:8.6pt}
+.dz .pv ul{padding-left:14px}
+.ppe{border:1.5px solid #1d3557;border-radius:6px;padding:6px 8px;margin-top:6px}
+.ppe h4{margin:0 0 4px;font-size:10pt;color:#1d3557}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.step{text-align:center;font-size:8.2pt;line-height:1.3}
+.step svg{width:100%;height:auto;max-height:68px;background:#f5f7fa;border-radius:5px}
+.step .n{display:inline-block;width:15px;height:15px;border-radius:50%;background:#1d3557;color:#fff;font-size:8pt;line-height:15px;margin-right:2px}
+.ppe .care{font-size:8pt;color:#444;margin-top:4px;background:#f5f7fa;border-radius:4px;padding:3px 6px}
+.ppes{display:grid;gap:6px;margin-top:6px}
+.ppes .ppe{margin-top:0}
+.ppes.n3{grid-template-columns:1fr 1fr}
+.ppes.n3 .steps{grid-template-columns:1fr 1fr;gap:4px}
+.ppes.n3 .step{font-size:7.6pt}
+.ppes.n3 .step svg{max-height:44px}
+.ppes.n3 .ppe h4{font-size:9.3pt}
+.ppes.n3 .care{font-size:7.3pt}
+.edu{margin-top:8px;border:1.5px solid #1d3557;border-radius:6px;padding:6px 8px;page-break-inside:avoid}
+.edu td,.edu th{padding:4px 5px;height:7mm}
+.edutxt{font-size:8.6pt;background:#f5f7fa;border-radius:4px;padding:4px 6px;margin-bottom:5px}
+.esign{text-align:right;font-size:9pt;margin-top:6px}
+.roomy .edu{margin-top:14px}.roomy .edu td,.roomy .edu th{height:9mm}
+.tight2 .edu td,.tight2 .edu th{height:5.5mm;padding:2px 4px}.tight2 .edutxt{font-size:7.8pt}
+.p2{padding-bottom:13mm}
+.tight4 .dz .sym{display:none}.tight4 .ppe .care{display:none}.tight4 .dz .ic svg{max-height:34px}.tight4 .edu td,.tight4 .edu th{height:5mm}
+.tight5 .dz .pv li:nth-child(4){display:none}.tight5 .step svg{max-height:24px}.tight5 .dz h4{font-size:9pt}
+.roomy .dz{padding:12px 14px;grid-template-columns:96px 1fr 1fr;gap:12px;margin-bottom:10px}.roomy .dz .ic svg{width:86px}.roomy .dz h4,.roomy .dz .pv h4{font-size:11.5pt!important}.roomy .dz .dis{font-size:11pt}.roomy .dz .sym,.roomy .dz .pv{font-size:10pt}.roomy .dz .pv li{margin:4px 0}
+.roomy .ppe{padding:10px 12px;margin-top:10px}.roomy .ppe h4{font-size:12.5pt}.roomy .step svg{max-height:130px}.roomy .step{font-size:10pt}.roomy .step .n{width:18px;height:18px;line-height:18px;font-size:9pt}.roomy .care{font-size:9.5pt;padding:5px 8px}
+.tight1 .dz{padding:4px 6px;margin-bottom:4px}.tight1 .dz .pv{font-size:8pt}.tight1 .step svg{max-height:36px}
+.tight2 .dz .sym:not(.law){display:none}.tight2 .dz svg{max-height:40px}
+.tight3 .ppes.n3 .steps{grid-template-columns:repeat(4,1fr)}.tight3 .step svg{max-height:28px}.tight3 .step{font-size:7pt}
+/* page3 */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pbox{border:1px solid #b8bec6;border-radius:5px;padding:4px;height:88mm;display:flex;flex-direction:column}
+.pbox .im{flex:1;display:flex;align-items:center;justify-content:center;background:#f5f7fa;border-radius:3px;overflow:hidden}
+.pbox img{max-width:100%;max-height:100%;object-fit:contain}
+.pbox .cap{font-size:8.5pt;padding:3px 2px 0;min-height:16px}
+.pbox .empty{color:#aaa;font-size:9pt}
+.pgrid.one .pbox{height:180mm;grid-column:span 2}
+.pgrid.two .pbox{height:120mm}
+.notebox{border:1px solid #b8bec6;border-radius:5px;padding:6px 8px;min-height:28mm;white-space:pre-wrap;font-size:9pt}
+@media (max-width:900px){.wrap{flex-direction:column}.form{width:100%;position:static;max-height:none}}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .bar,.form,.noprint{display:none!important}
+  .wrap{padding:0;display:block}
+  .scaler{transform:none!important;height:auto!important}
+  .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto;break-after:auto}
+}
+</style></head><body>
+
+<div class="bar">
+  <b>사후관리 출력</b>
+  <select id="sel" title="근로자 선택"></select>
+  <button onclick="addWorker()">+ 새 근로자</button>
+  <button class="del" onclick="delWorker()">삭제</button>
+  <button onclick="workers.push(...demo());cur=workers.length-3;save();fillSel();renderForm();renderPages()">예시 불러오기</button>
+  <button onclick="exportJSON()">백업 저장</button>
+  <label class="btn">백업 불러오기<input type="file" accept=".json" hidden onchange="importJSON(this)"></label>
+  <button class="pri" onclick="window.print()">인쇄 / PDF 저장</button>
+</div>
+
+<div class="wrap">
+  <div class="form" id="form"></div>
+  <div class="preview"><div class="scaler" id="scaler"><div id="pages"></div></div></div>
+</div>
+
+<script>
+/* ===================== 유해인자 라이브러리 ===================== */
+const HZ = {
+ dust:{name:'광물성 분진',icon:'lungs',kw:['분진','광물','유리규산','석면','시멘트분진'],
+  dis:['진폐증(규폐증)','만성폐쇄성폐질환(COPD)','폐암(결정형 유리규산)'],
+  sym:'기침·가래, 계단 오를 때 숨참, 폐기능 저하',
+  prev:['절단·할석·연마 시 물 뿌리며 작업(습식)','집진기 부착 공구·국소배기 사용','금연 — 폐기능 저하를 크게 앞당김','작업복 분진은 털지 말고 진공청소'],
+  ppe:'mask',point:'방진마스크(특급/1급) 지급·착용과 밀착도를 점검하고, 습식작업·집진 여부를 확인합니다.'},
+ noise:{name:'소음',icon:'ear',kw:['소음'],
+  dis:['소음성 난청','이명(귀울림)','수면장애·혈압 상승'],
+  sym:'대화가 잘 안 들림, 작업 후 귀 먹먹함·삐 소리',
+  prev:['85dB 이상 구역에서 귀마개·귀덮개 상시 착용','소음 공구 연속 사용을 줄이고 조용한 곳에서 휴식','공구 정비·방음덮개로 소음 줄이기','먹먹함·이명이 계속되면 바로 알리기'],
+  ppe:'earplug',point:'청력보호구 지급·착용 상태를 확인하고, 4kHz 부근 청력 변화를 추적합니다.'},
+ vib:{name:'진동(국소)',icon:'hand',kw:['진동'],
+  dis:['수지진동증후군(레이노 현상)','손 저림·감각 저하','손목·팔꿈치 근골격계 질환'],
+  sym:'추울 때 손가락이 하얗게 변함, 저림, 쥐는 힘 약화',
+  prev:['저진동 공구 사용·공구 정비','연속 사용 줄이고 교대·휴식','손 보온 유지, 공구를 너무 세게 쥐지 않기','흡연은 혈관을 좁혀 증상을 악화'],
+  ppe:'glove',point:'진동공구 사용시간·진동방지장갑 착용과 겨울철 손 보온을 지도합니다.'},
+ uv:{name:'자외선(유해광선)',icon:'sun',kw:['자외선','유해광선','광선'],
+  dis:['광각막염(눈 화상)','백내장·익상편','일광화상·피부암'],
+  sym:'눈 따가움·눈물, 시야 흐림, 피부 붉어짐',
+  prev:['자외선 차단 보안경 착용','긴소매·목가리개·안전모 차양','자외선 차단제(SPF30 이상) 2~3시간마다','한낮(11~15시) 그늘에서 휴식'],
+  ppe:'goggles',point:'옥외작업 시 보안경·긴소매·차양 착용과 자외선 차단제 사용을 지도합니다.'},
+ weld:{name:'용접흄',icon:'spark',kw:['용접','흄','망간'],
+  dis:['금속열(오한·발열)','망간 중독(손떨림·보행장애)','만성 기관지염·폐암'],
+  sym:'작업 후 몸살 같은 발열, 기침, 손떨림',
+  prev:['국소배기장치·이동식 흄 집진기 사용','흄 기둥 밖으로 얼굴 위치','밀폐공간 용접 시 환기·송기마스크','작업 후 손 씻고 식사'],
+  ppe:'mask',point:'용접용 방진마스크·보안면 착용과 국소배기 사용을 확인합니다.'},
+ solvent:{name:'유기용제',icon:'flask',kw:['톨루엔','크실렌','자일렌','용제','유기','아세톤','신나','벤젠'],
+  dis:['중추신경 장해(두통·어지럼)','간·신장 장해','접촉성 피부염'],
+  sym:'두통, 어지럼, 메스꺼움, 손 피부 갈라짐',
+  prev:['도장·방수 작업 시 송풍기로 환기','사용 후 용기 뚜껑 닫기','피부에 묻으면 즉시 씻기','밀폐공간 작업 전 가스농도 측정'],
+  ppe:'gasmask',point:'방독마스크(유기화합물용) 정화통 교체 주기와 환기 상태를 점검합니다.'},
+ cement:{name:'시멘트(습식)',icon:'skin',kw:['시멘트','크롬'],
+  dis:['접촉성 피부염(6가 크롬)','시멘트 화상(강알칼리)','눈 손상'],
+  sym:'손·발목 가려움·발진·갈라짐, 피부 따가움',
+  prev:['젖은 시멘트가 피부에 닿지 않게','묻으면 즉시 깨끗한 물로 씻기','장화 안으로 시멘트가 들어가지 않게','작업 후 보습제 사용'],
+  ppe:'chemglove',point:'내알칼리 장갑·장화 착용과 피부 증상 여부를 확인합니다.'},
+ asbestos:{name:'석면',icon:'fiber',
+  dis:['석면폐증','폐암','악성중피종'],
+  sym:'수년~수십 년 뒤 숨참·기침·흉통이 나타날 수 있음(잠복기가 김)',
+  prev:['해체 전 석면조사 결과 확인, 함유 자재를 임의로 깨거나 자르지 않기','작업장 밀폐·음압 유지, 물을 뿌려 습식으로 제거','작업복은 현장에서 벗고 집에 가져가지 않기','흡연하면 폐암 위험이 크게 늘어남 — 금연'],
+  law:'석면 해체·제거는 석면해체·제거업자가 수행(산안법 제122조)',
+  ppe:'suit',point:'석면 해체·제거 시 특급 방진마스크(또는 전동식)·전신 보호복 착용과 탈의·샤워 절차를 확인합니다.'},
+ night:{name:'야간작업',icon:'moon',
+  dis:['수면장애','심뇌혈관질환(고혈압 등)','위장장애·대사질환(당뇨 등)'],
+  sym:'낮에 잠을 못 잠, 피로 누적, 속쓰림, 혈압·혈당 상승',
+  prev:['낮잠은 암막커튼·귀마개로 어둡고 조용하게','야간 식사는 가볍고 소화 잘 되는 음식','퇴근길 선글라스로 햇빛을 줄여 잠들기 쉽게','혈압·혈당을 정기적으로 확인'],
+  law:'특수건강진단 대상: 6개월간 0~5시 포함 8시간 작업 월평균 4회 이상, 또는 22~6시 작업 월평균 60시간 이상',
+  ppe:'night',point:'수면 상태·혈압·혈당을 확인하고, 교대 순서(아침→저녁→야간)와 연속 야간근무 일수를 점검합니다.'},
+ heat:{name:'고열(폭염)',icon:'thermo',
+  dis:['열사병(생명 위험)','열탈진·열경련','열실신'],
+  sym:'어지럼, 두통, 메스꺼움, 근육 경련 / 땀이 안 나고 의식이 흐려지면 응급',
+  prev:['목마르지 않아도 20분마다 물 한 컵','그늘·냉방 휴게시설에서 휴식','더운 시간대(14~17시) 작업 줄이기','고령자·신규 배치자·고혈압 등 질환자는 특히 주의'],
+  law:'체감온도 31℃ 이상 폭염작업 보건조치, 33℃ 이상 2시간마다 20분 이상 휴식(안전보건규칙 제560조)',
+  ppe:'heat',point:'체감온도별 휴식 부여(33℃ 이상 2시간마다 20분)를 지키고, 온열질환 민감군(고령·고혈압 등)인지 확인합니다.'},
+ cold:{name:'한랭',icon:'snow',
+  dis:['저체온증','동상·동창','추위로 인한 심뇌혈관질환 악화'],
+  sym:'심한 떨림, 말이 어눌해짐, 손발 감각 저하·창백',
+  prev:['옷을 여러 겹 입고 젖은 옷은 바로 갈아입기','따뜻한 휴게시설·따뜻한 음료','손·발·귀 보온(방한장갑·방한화·방한모)','음주 후 작업 금지'],
+  ppe:'cold',point:'방한복·방한장갑 지급과 따뜻한 휴게시설 운영을 확인합니다. 고혈압자는 특히 주의합니다.'},
+ co:{name:'일산화탄소(갈탄 양생·밀폐공간)',icon:'co',
+  dis:['일산화탄소 중독','산소결핍 질식','중독 후 뇌 손상 후유증'],
+  sym:'두통, 어지럼, 메스꺼움, 졸림 → 의식을 잃음',
+  prev:['갈탄·숯 난로 양생 공간은 출입 전 산소·가스 농도 측정','환기 후 출입, 2인 1조·감시인 배치','측정 없이 절대 들어가지 않기','쓰러진 동료를 보호구 없이 구하러 들어가지 않기'],
+  law:'밀폐공간 적정공기: 산소 18% 이상 23.5% 미만, CO 30ppm 미만, H₂S 10ppm 미만',
+  ppe:'airline',point:'갈탄 양생·밀폐공간 작업 전 산소·유해가스 농도 측정, 송기마스크와 감시인 배치를 확인합니다.'},
+ iso:{name:'이소시아네이트(우레탄 방수·도장)',icon:'drops',
+  dis:['직업성 천식','과민성 폐렴','접촉성 피부염(피부 감작)'],
+  sym:'작업 중·후 기침, 쌕쌕거림, 가슴 답답함 — 쉬는 날엔 좋아짐',
+  prev:['우레탄 방수·스프레이 도장 시 충분히 환기','피부에 묻지 않게 장갑·긴소매','한 번 감작되면 아주 적은 양에도 증상 — 바로 알리기','작업 후 손 씻기'],
+  ppe:'gasmask',point:'우레탄 방수 등 작업 시 방독마스크(또는 송기마스크) 착용과 천식 증상 여부를 확인합니다.'},
+ wood:{name:'목재·유리섬유 분진',icon:'saw',
+  dis:['비강·부비동 질환(목재분진, 비강암)','직업성 천식','피부·눈 자극(유리섬유 단열재)'],
+  sym:'코막힘·콧물·코피, 기침, 피부 따가움·가려움',
+  prev:['거푸집·목재 절단 시 집진기 부착 공구 사용','단열재 작업 시 긴소매·장갑·보안경','작업복은 따로 세탁','청소는 빗자루 대신 진공청소기'],
+  ppe:'mask',point:'목재 절단·단열재 작업 시 방진마스크·보안경·긴소매 착용을 확인합니다.'},
+ msd:{name:'중량물·근골격계',icon:'back',
+  dis:['요통·추간판 탈출증','어깨 회전근개 질환','손목·팔꿈치 질환'],
+  sym:'허리·어깨 통증, 다리 저림, 손목 시큰거림',
+  prev:['무거운 자재는 2인 1조·운반 장비 사용','작업 전후 스트레칭','머리 위 작업·쪼그린 자세를 오래 하지 않기','통증은 참지 말고 초기에 알리기'],
+  ppe:'lift',point:'근골격계 증상 여부를 확인하고, 중량물 취급 시 2인 1조·운반장비 사용을 지도합니다.'},
+ arc:{name:'용접 아크광선',icon:'arceye',
+  dis:['광각막염(전광성 안염, 눈 화상)','백내장·망막 손상','피부 화상'],
+  sym:'작업 몇 시간 뒤 눈에 모래가 들어간 듯한 통증·눈물·눈부심',
+  prev:['용접 시 반드시 차광 보안면 착용(옆 보조자도)','차광막·칸막이로 주변 작업자 보호','긴소매·용접장갑으로 피부 노출 차단','눈이 아프면 비비지 말고 바로 알리기'],
+  ppe:'helmet',point:'용접자와 보조자 모두 적정 차광번호의 보안면 착용과 차광막 설치를 확인합니다.'},
+ cr6:{name:'6가크롬(스테인리스 용접·절단)',icon:'nose',
+  dis:['비중격 궤양·천공','폐암','알레르기성 피부염·천식'],
+  sym:'코 따가움·코피·콧물, 피부 발진·가려움',
+  prev:['스테인리스·도금 강재 용접 시 국소배기·흄 집진기 사용','흄 기둥 밖으로 얼굴 위치','작업 중 코를 만지지 않기, 작업 후 손·얼굴 씻기','작업장에서 먹거나 흡연하지 않기'],
+  law:'크롬과 그 화합물은 특수건강진단 대상 유해인자',
+  ppe:'mask',point:'스테인리스 용접 시 국소배기와 방진마스크(특급/1급) 착용, 코 점막·피부 증상을 확인합니다.'}
+};
+const PPE_ITEM={mask:'방진마스크(특급/1급)',earplug:'귀마개(폼)',glove:'진동방지장갑',goggles:'자외선 차단 보안경',gasmask:'방독마스크·정화통(유기화합물용)',chemglove:'내알칼리 장갑·장화',suit:'일회용 전신 보호복',helmet:'용접 보안면·용접장갑',airline:'송기마스크',cold:'방한복·방한장갑',heat:'쿨토시·냉각조끼'};
+const EDU_TEXT='본인은 위 직업성 질환의 예방법과 보호구 착용법·관리 요령에 대해 교육을 받았으며, 아래 보호구를 수령하였습니다. 작업 중 보호구를 올바르게 착용하겠습니다.';
+const GRADE={A:'정상',C1:'직업병 요관찰자',C2:'일반질병 요관찰자',D1:'직업병 유소견자',D2:'일반질병 유소견자',CN:'야간작업 요관찰자',DN:'야간작업 유소견자',R:'2차 건강진단 대상',U:'판정 불가'};
+const RANK={D1:6,DN:6,C1:5,CN:5,D2:4,C2:3,R:2,U:1,A:0};
+const FIT={'가':'현재 조건하에서 작업 가능','나':'일정 조건하에서 현재 작업 가능','다':'한시적으로 현재 작업 불가','라':'영구적으로 현재 작업 불가'};
+const FREQ=['0.5','1','2','3','4','6'];
+
+/* ===================== 그림 ===================== */
+const SK='#fde3cf',SKS='#a0785f',NV='#1d3557',HAND='#f6c9a8';
+const face=(x='')=>`<circle cx="40" cy="33" r="21" fill="${SK}" stroke="${SKS}"/><ellipse cx="19" cy="34" rx="3" ry="5" fill="${SK}" stroke="${SKS}"/><ellipse cx="61" cy="34" rx="3" ry="5" fill="${SK}" stroke="${SKS}"/><circle cx="33" cy="28" r="1.6" fill="#333"/><circle cx="47" cy="28" r="1.6" fill="#333"/>${x}`;
+const side=(x='')=>`<path d="M22 14 Q46 6 56 24 L60 34 L56 36 Q57 46 50 52 L30 54 Q18 46 18 32 Q18 20 22 14Z" fill="${SK}" stroke="${SKS}"/><ellipse cx="34" cy="34" rx="5" ry="7.5" fill="#f3c8ad" stroke="${SKS}"/><path d="M34 30 q2 4 0 8" fill="none" stroke="${SKS}"/>${x}`;
+const MSK=`<path d="M28 31 Q40 25 52 31 L50 44 Q40 52 30 44Z" fill="#e8eef5" stroke="${NV}" stroke-width="1.4"/>`;
+const arr=(x1,y1,x2,y2,c='#e76f51')=>{const a=Math.atan2(y2-y1,x2-x1),h=5;return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="2"/><path d="M${x2} ${y2} L${x2-h*Math.cos(a-0.5)} ${y2-h*Math.sin(a-0.5)} L${x2-h*Math.cos(a+0.5)} ${y2-h*Math.sin(a+0.5)}Z" fill="${c}"/>`};
+const sv=(b)=>`<svg viewBox="0 0 80 64" xmlns="http://www.w3.org/2000/svg">${b}</svg>`;
+const ICON={
+ lungs:`<svg viewBox="0 0 60 56"><path d="M30 6v18" stroke="#8a2c1f" stroke-width="3" stroke-linecap="round"/><path d="M27 20 Q16 14 9 28 Q4 44 10 50 Q20 52 26 44Z" fill="#f2a9a0" stroke="#8a2c1f" stroke-width="1.5"/><path d="M33 20 Q44 14 51 28 Q56 44 50 50 Q40 52 34 44Z" fill="#f2a9a0" stroke="#8a2c1f" stroke-width="1.5"/><g fill="#7a6a62"><circle cx="16" cy="36" r="1.6"/><circle cx="20" cy="42" r="1.4"/><circle cx="14" cy="44" r="1.2"/><circle cx="44" cy="34" r="1.6"/><circle cx="40" cy="42" r="1.3"/><circle cx="47" cy="43" r="1.2"/></g></svg>`,
+ ear:`<svg viewBox="0 0 60 56"><path d="M22 46 Q14 40 16 26 Q18 10 32 10 Q46 10 46 24 Q46 32 38 36 Q34 38 34 44 Q34 52 26 50" fill="${SK}" stroke="${SKS}" stroke-width="2"/><path d="M26 24 Q28 16 34 18 Q40 20 36 28" fill="none" stroke="${SKS}" stroke-width="2"/><g stroke="#c0392b" stroke-width="2" fill="none"><path d="M50 18 q5 8 0 16"/><path d="M54 14 q8 12 0 24"/></g></svg>`,
+ hand:`<svg viewBox="0 0 60 56"><path d="M18 52 L16 30 Q15 26 19 26 L21 28 L20 12 Q20 9 23 9 Q26 9 26 12 L26 26 L27 8 Q27 5 30 5 Q33 5 33 8 L33 26 L35 10 Q35 7 38 7 Q41 7 41 10 L40 28 L43 16 Q44 13 47 14 Q49 15 48 18 L44 40 Q42 50 36 52Z" fill="${SK}" stroke="${SKS}" stroke-width="1.5"/><g fill="#fff" opacity=".9"><rect x="21" y="9" width="5" height="9" rx="2.5"/><rect x="27.5" y="5" width="5" height="9" rx="2.5"/><rect x="35" y="7" width="5" height="9" rx="2.5"/></g><g stroke="#2563a8" stroke-width="1.6" fill="none"><path d="M6 20 l4 3 -4 3 4 3"/><path d="M54 30 l-4 3 4 3 -4 3"/></g></svg>`,
+ sun:`<svg viewBox="0 0 60 56"><circle cx="16" cy="14" r="7" fill="#f4b942"/><g stroke="#f4b942" stroke-width="2"><line x1="16" y1="2" x2="16" y2="5"/><line x1="4" y1="14" x2="7" y2="14"/><line x1="25" y1="5" x2="23" y2="7"/><line x1="7" y1="5" x2="9" y2="7"/></g><path d="M18 24 L30 34" stroke="#9b59b6" stroke-width="2" stroke-dasharray="3 2"/><path d="M14 38 Q32 22 50 38 Q32 54 14 38Z" fill="#fff" stroke="${SKS}" stroke-width="1.6"/><circle cx="32" cy="38" r="7" fill="#6b8fb5"/><circle cx="32" cy="38" r="3" fill="#222"/><path d="M38 33 q4 -2 6 1" stroke="#c0392b" stroke-width="1.4" fill="none"/></svg>`,
+ spark:`<svg viewBox="0 0 60 56"><rect x="8" y="40" width="44" height="6" fill="#8c96a3"/><path d="M30 40 L36 18" stroke="#555" stroke-width="3"/><g stroke="#f4a261" stroke-width="1.8"><line x1="30" y1="40" x2="22" y2="32"/><line x1="30" y1="40" x2="40" y2="34"/><line x1="30" y1="40" x2="26" y2="30"/></g><g fill="#a8a8a8" opacity=".8"><circle cx="28" cy="20" r="5"/><circle cx="22" cy="12" r="6"/><circle cx="32" cy="8" r="4"/></g></svg>`,
+ flask:`<svg viewBox="0 0 60 56"><path d="M24 6h12v14l12 24q2 6 -4 6H16q-6 0 -4 -6l12 -24Z" fill="#e8f4ec" stroke="#2a7a3b" stroke-width="1.6"/><path d="M15 40h30l3 6q1 4 -3 4H15q-4 0 -3 -4Z" fill="#7cc48f"/><g fill="none" stroke="#7cc48f" stroke-width="1.6"><path d="M30 4 q-4 -3 0 -6"/><path d="M38 6 q4 -4 0 -8"/></g></svg>`,
+ skin:`<svg viewBox="0 0 60 56"><path d="M10 48 Q8 30 18 22 L40 12 Q48 10 50 18 Q52 24 44 28 L32 34 L46 34 Q52 36 50 42 Q48 48 40 48Z" fill="${SK}" stroke="${SKS}" stroke-width="1.5"/><g fill="#d35454"><circle cx="24" cy="36" r="1.8"/><circle cx="30" cy="40" r="1.5"/><circle cx="20" cy="42" r="1.4"/><circle cx="34" cy="26" r="1.5"/></g><rect x="4" y="2" width="16" height="12" rx="2" fill="#a8adb3"/></svg>`,
+ fiber:`<svg viewBox="0 0 60 56"><path d="M27 22 Q16 16 9 30 Q4 46 10 51 Q20 53 26 45Z" fill="#f2a9a0" stroke="#8a2c1f" stroke-width="1.5"/><path d="M33 22 Q44 16 51 30 Q56 46 50 51 Q40 53 34 45Z" fill="#f2a9a0" stroke="#8a2c1f" stroke-width="1.5"/><g stroke="#555" stroke-width="1.3"><line x1="6" y1="6" x2="16" y2="14"/><line x1="20" y1="4" x2="24" y2="16"/><line x1="40" y1="5" x2="34" y2="15"/><line x1="54" y1="8" x2="44" y2="14"/><line x1="14" y1="36" x2="20" y2="40"/><line x1="42" y1="36" x2="46" y2="42"/></g></svg>`,
+ moon:`<svg viewBox="0 0 60 56"><rect x="2" y="2" width="56" height="52" rx="8" fill="#1d3557"/><path d="M34 10 A16 16 0 1 0 48 34 A12 12 0 1 1 34 10Z" fill="#f4d03f"/><g fill="#fff"><circle cx="12" cy="12" r="1.2"/><circle cx="48" cy="12" r="1"/><circle cx="14" cy="44" r="1"/></g></svg>`,
+ thermo:`<svg viewBox="0 0 60 56"><circle cx="46" cy="12" r="8" fill="#f4a261"/><rect x="20" y="6" width="10" height="34" rx="5" fill="#fff" stroke="#c0392b" stroke-width="1.6"/><circle cx="25" cy="44" r="8" fill="#c0392b"/><rect x="23" y="18" width="4" height="24" fill="#c0392b"/><g stroke="#c0392b" stroke-width="1.6" fill="none"><path d="M40 30 q3 4 0 8 q-3 4 0 8"/><path d="M48 30 q3 4 0 8 q-3 4 0 8"/></g></svg>`,
+ snow:`<svg viewBox="0 0 60 56"><g stroke="#2563a8" stroke-width="2.4" stroke-linecap="round"><line x1="30" y1="6" x2="30" y2="50"/><line x1="11" y1="17" x2="49" y2="39"/><line x1="11" y1="39" x2="49" y2="17"/><path d="M24 10l6 5 6-5M24 46l6-5 6 5" fill="none"/></g></svg>`,
+ co:`<svg viewBox="0 0 60 56"><rect x="14" y="26" width="24" height="24" rx="3" fill="#555"/><rect x="18" y="38" width="16" height="8" fill="#e76f51"/><g fill="#9aa0a6" opacity=".85"><circle cx="26" cy="18" r="6"/><circle cx="34" cy="10" r="7"/><circle cx="44" cy="16" r="5"/></g><text x="40" y="14" font-size="8" font-weight="700" fill="#c0392b">CO</text><path d="M44 30 l10 18 h-20z" fill="#f4d03f" stroke="#b7950b"/><text x="44" y="46" font-size="10" font-weight="700" text-anchor="middle" fill="#333">!</text></svg>`,
+ drops:`<svg viewBox="0 0 60 56"><rect x="8" y="30" width="26" height="20" rx="2" fill="#7a9cc6"/><path d="M34 26 L50 10 L54 14 L38 30Z" fill="#888"/><g fill="#b8d4f0"><circle cx="16" cy="20" r="2"/><circle cx="24" cy="14" r="2.4"/><circle cx="12" cy="10" r="1.6"/><circle cx="28" cy="22" r="1.6"/></g><path d="M46 36 q6 4 0 12 M50 34 q8 6 0 16" stroke="#c0392b" stroke-width="1.6" fill="none"/></svg>`,
+ saw:`<svg viewBox="0 0 60 56"><rect x="6" y="34" width="48" height="10" fill="#d4a373" stroke="#8a5a2b"/><circle cx="30" cy="30" r="12" fill="#ccc" stroke="#666" stroke-width="1.5"/><circle cx="30" cy="30" r="3" fill="#666"/><g fill="#d4a373"><circle cx="46" cy="22" r="1.6"/><circle cx="50" cy="16" r="1.3"/><circle cx="44" cy="12" r="1.2"/><circle cx="52" cy="26" r="1.2"/></g></svg>`,
+ back:`<svg viewBox="0 0 60 56"><circle cx="24" cy="9" r="5" fill="${SK}" stroke="${SKS}"/><path d="M24 14 Q30 24 34 30" stroke="#5b7fa6" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M34 30 L30 50 M34 30 L40 50" stroke="#3f5f85" stroke-width="4" stroke-linecap="round"/><path d="M26 18 L42 22" stroke="#5b7fa6" stroke-width="3.5" stroke-linecap="round"/><rect x="40" y="18" width="14" height="12" fill="#d4a373" stroke="#8a5a2b"/><circle cx="31" cy="25" r="5" fill="none" stroke="#c0392b" stroke-width="2"/></svg>`,
+ arceye:`<svg viewBox="0 0 60 56"><path d="M8 40 Q30 22 52 40 Q30 56 8 40Z" fill="#fff" stroke="#a0785f" stroke-width="1.6"/><circle cx="30" cy="40" r="7" fill="#6b8fb5"/><circle cx="30" cy="40" r="3" fill="#222"/><g stroke="#4ea8ff" stroke-width="2"><line x1="30" y1="4" x2="30" y2="16"/><line x1="18" y1="8" x2="23" y2="18"/><line x1="42" y1="8" x2="37" y2="18"/></g><circle cx="30" cy="6" r="4" fill="#bfe3ff"/></svg>`,
+ nose:`<svg viewBox="0 0 60 56"><path d="M22 6 Q26 26 16 40 Q20 48 30 46 Q36 48 38 42" fill="#fde3cf" stroke="#a0785f" stroke-width="2"/><circle cx="26" cy="40" r="2.5" fill="#c0392b"/><path d="M26 43 v6" stroke="#c0392b" stroke-width="2"/><g fill="#9aa0a6"><circle cx="46" cy="16" r="5"/><circle cx="52" cy="26" r="4"/><circle cx="44" cy="30" r="3"/></g><text x="47" y="19" font-size="6" font-weight="700" text-anchor="middle" fill="#fff">Cr</text></svg>`
+};
+const PPE={
+ mask:{name:'방진마스크 착용법',steps:[
+  [sv(face(`<path d="M28 44 Q40 36 52 44 L50 56 Q40 62 30 56Z" fill="#e8eef5" stroke="${NV}" stroke-width="1.4"/><ellipse cx="24" cy="54" rx="5" ry="4" fill="${HAND}"/><ellipse cx="56" cy="54" rx="5" ry="4" fill="${HAND}"/>${arr(40,62,40,48)}`)),'코·턱을 감싸도록 얼굴에 댄다'],
+  [sv(face(MSK+`<path d="M29 33 L22 14" stroke="${NV}" stroke-width="1.6"/><path d="M31 43 L18 46" stroke="${NV}" stroke-width="1.6"/>`+arr(20,22,26,8))),'위 끈은 머리 위, 아래 끈은 목 뒤로'],
+  [sv(face(MSK+`<ellipse cx="34" cy="27" rx="4" ry="3" fill="${HAND}" stroke="${SKS}"/><ellipse cx="46" cy="27" rx="4" ry="3" fill="${HAND}" stroke="${SKS}"/>`+arr(34,16,36,24)+arr(46,16,44,24))),'코 클립을 양손으로 눌러 맞춘다'],
+  [sv(face(MSK+`<ellipse cx="40" cy="39" rx="13" ry="9" fill="${HAND}" opacity=".85" stroke="${SKS}"/><g stroke="#2563a8" stroke-width="1.4" fill="none"><path d="M60 18 q4 3 0 6"/><path d="M64 15 q6 6 0 12"/></g>`)),'양손으로 감싸고 숨을 내쉬어 새는지 확인(밀착검사)']],
+  care:'수염이 있으면 밀착이 안 됩니다 · 숨쉬기 힘들거나 젖고 찢어지면 즉시 교체 · 분진 작업: 특급/1급'},
+ earplug:{name:'귀마개(폼) 착용법',steps:[
+  [sv(`<rect x="30" y="22" width="20" height="9" rx="4.5" fill="#f4a261" stroke="#b86e00"/><ellipse cx="24" cy="27" rx="8" ry="6" fill="${HAND}" stroke="${SKS}"/><ellipse cx="56" cy="27" rx="8" ry="6" fill="${HAND}" stroke="${SKS}"/>${arr(28,44,52,44)}${arr(52,50,28,50)}`),'손가락으로 가늘게 돌려 만다'],
+  [sv(side(`<ellipse cx="34" cy="16" rx="6" ry="4" fill="${HAND}" stroke="${SKS}"/>`+arr(34,22,40,8))),'반대 손으로 귀를 위·뒤로 당긴다'],
+  [sv(side(`<rect x="22" y="31" width="10" height="5" rx="2.5" fill="#f4a261" stroke="#b86e00"/><ellipse cx="18" cy="34" rx="5" ry="4" fill="${HAND}" stroke="${SKS}"/>`+arr(8,34,14,34))),'깊게 넣고 20~30초 눌러 부풀 때까지 유지'],
+  [sv(side(`<circle cx="34" cy="34" r="3" fill="#f4a261"/><g stroke="#c0392b" stroke-width="1.6" fill="none"><path d="M6 24 q-4 10 0 20"/><path d="M12 28 q-3 6 0 12"/></g><line x1="4" y1="22" x2="16" y2="46" stroke="#c0392b" stroke-width="2"/>`)),'귀를 손으로 막았을 때와 소리 차이가 적으면 잘 착용된 것']],
+  care:'손을 씻고 착용 · 더러워지거나 탄력이 없어지면 교체 · 귀덮개와 함께 쓰면 효과가 커짐'},
+ glove:{name:'진동방지장갑 사용법',steps:[
+  [sv(ICON.hand.replace('viewBox="0 0 60 56"','x="12" y="4" width="56" height="56" viewBox="0 0 60 56"')),'손 크기에 맞는 진동방지장갑 선택'],
+  [sv(`<rect x="22" y="10" width="36" height="40" rx="10" fill="#5b7fa6" stroke="${NV}"/><rect x="26" y="44" width="28" height="12" fill="#3f5f85"/>${arr(40,62,40,52,'#fff')}`),'손목까지 끝까지 끼운다'],
+  [sv(`<rect x="10" y="26" width="46" height="10" rx="3" fill="#8c96a3"/><rect x="56" y="22" width="16" height="18" rx="3" fill="#555"/><ellipse cx="30" cy="31" rx="12" ry="9" fill="#5b7fa6" opacity=".9"/>`),'공구는 가볍게 쥐고 연속 사용을 줄인다'],
+  [sv(`<rect x="22" y="12" width="36" height="40" rx="10" fill="#5b7fa6" stroke="${NV}"/><g fill="#6bb6e8"><path d="M30 20 q3 5 0 8 q-3 -3 0 -8Z"/><path d="M46 28 q3 5 0 8 q-3 -3 0 -8Z"/></g><text x="40" y="62" font-size="8" text-anchor="middle" fill="#c0392b">젖으면 교체</text>`),'젖으면 교체해 손을 따뜻하게 유지']],
+  care:'겨울철 손 보온이 가장 중요 · 손가락 저림·하얗게 변함이 있으면 바로 알리기'},
+ goggles:{name:'자외선 차단 보호구 착용법',steps:[
+  [sv(face(`<rect x="26" y="23" width="12" height="9" rx="3" fill="#4a6b8a" opacity=".85"/><rect x="42" y="23" width="12" height="9" rx="3" fill="#4a6b8a" opacity=".85"/><line x1="38" y1="27" x2="42" y2="27" stroke="#333" stroke-width="1.4"/>`)),'측면까지 가리는 차광 보안경 착용'],
+  [sv(face(`<path d="M16 22 Q40 0 64 22Z" fill="#f4d03f" stroke="#b7950b"/><path d="M14 22 h52" stroke="#b7950b" stroke-width="2"/><path d="M19 22 L18 48 Q22 54 26 50 L24 22" fill="#e9ecef" stroke="#999"/>`)),'안전모 차양·목가리개로 목과 귀를 가린다'],
+  [sv(`<rect x="24" y="8" width="32" height="48" rx="6" fill="#fff" stroke="#999"/><rect x="24" y="8" width="32" height="12" rx="6" fill="#f4a261"/><text x="40" y="38" font-size="9" text-anchor="middle" fill="#333">SPF</text><text x="40" y="49" font-size="9" text-anchor="middle" fill="#333">30+</text>`),'노출 피부에 차단제, 2~3시간마다 덧바르기'],
+  [sv(`<rect x="22" y="10" width="36" height="44" rx="4" fill="#5b7fa6"/><rect x="10" y="12" width="14" height="30" rx="5" fill="#5b7fa6"/><rect x="56" y="12" width="14" height="30" rx="5" fill="#5b7fa6"/>`),'긴소매 작업복을 입는다']],
+  care:'용접 아크 근처는 차광 보안면 사용 · 눈이 따갑고 눈물이 나면 작업 중지 후 알리기'},
+ gasmask:{name:'방독마스크 착용법',steps:[
+  [sv(`<circle cx="40" cy="32" r="16" fill="#555"/><circle cx="40" cy="32" r="10" fill="#888"/><text x="40" y="58" font-size="8" text-anchor="middle" fill="#333">유기화합물용·유효기간</text>`),'정화통 종류·유효기간 확인'],
+  [sv(face(`<path d="M26 30 Q40 22 54 30 L52 46 Q40 54 28 46Z" fill="#555"/><circle cx="26" cy="46" r="6" fill="#888"/><circle cx="54" cy="46" r="6" fill="#888"/>`)),'코와 입을 덮도록 쓴다'],
+  [sv(face(`<path d="M26 30 Q40 22 54 30 L52 46 Q40 54 28 46Z" fill="#555"/><path d="M27 32 L20 14 M29 44 L16 48" stroke="#333" stroke-width="1.8"/>`+arr(14,22,22,10))),'머리끈을 균형 있게 조인다'],
+  [sv(face(`<path d="M26 30 Q40 22 54 30 L52 46 Q40 54 28 46Z" fill="#555"/><ellipse cx="26" cy="46" rx="7" ry="7" fill="${HAND}" stroke="${SKS}"/><ellipse cx="54" cy="46" rx="7" ry="7" fill="${HAND}" stroke="${SKS}"/>`)),'정화통을 손으로 막고 숨을 들이쉬어 밀착 확인']],
+  care:'냄새가 나기 시작하면 정화통 교체(파과) · 산소 부족 장소(밀폐공간)에서는 사용 금지 → 송기마스크'},
+ chemglove:{name:'내알칼리 장갑·장화 착용법',steps:[
+  [sv(`<rect x="24" y="8" width="32" height="44" rx="10" fill="#2a9d8f" stroke="#1d6f66"/><text x="40" y="60" font-size="8" text-anchor="middle" fill="#333">찢어짐 확인</text>`),'장갑에 구멍·찢어짐이 없는지 확인'],
+  [sv(`<rect x="22" y="6" width="36" height="40" rx="10" fill="#2a9d8f"/><rect x="18" y="40" width="44" height="14" rx="3" fill="#5b7fa6"/>`),'소매를 장갑 위로 덮어 시멘트 유입 차단'],
+  [sv(`<path d="M28 6 h18 v38 h14 q6 0 6 8 v6 H28Z" fill="#333"/><rect x="24" y="2" width="26" height="10" rx="2" fill="#5b7fa6"/>`),'바지 끝은 장화 밖으로 덮는다'],
+  [sv(`<path d="M20 50 Q18 30 28 24 L46 16 Q52 14 54 20 Q54 26 46 28 L36 34 L48 34 Q54 36 52 42 Q50 48 42 48Z" fill="${SK}" stroke="${SKS}"/><g fill="#6bb6e8"><path d="M30 4 q3 5 0 8 q-3 -3 0 -8Z"/><path d="M40 6 q3 5 0 8 q-3 -3 0 -8Z"/></g>`),'묻으면 즉시 물로 씻고 보습']],
+  care:'젖은 시멘트가 묻은 장갑은 바로 교체 · 피부 가려움·갈라짐은 초기에 알리기'},
+ suit:{name:'석면 작업 보호구 착용·탈의법',steps:[
+  [sv(`<circle cx="40" cy="12" r="7" fill="#fff" stroke="#999"/><path d="M28 20 h24 l4 22 h-6 l-2 18 h-8 v-14 h-0 v14 h-8 l-2 -18 h-6z" fill="#fff" stroke="#999"/><line x1="40" y1="20" x2="40" y2="44" stroke="#2563a8" stroke-width="1.5"/>`),'일회용 전신 보호복을 입고 지퍼를 끝까지'],
+  [sv(face(MSK+`<path d="M24 22 Q40 4 56 22" fill="none" stroke="#bbb" stroke-width="5"/>`)),'특급 방진마스크(또는 전동식) 착용 후 밀착검사'],
+  [sv(`<rect x="22" y="10" width="36" height="30" rx="4" fill="#fff" stroke="#999"/><rect x="22" y="40" width="36" height="8" fill="#f4a261"/><rect x="24" y="48" width="32" height="10" rx="3" fill="${HAND}"/><text x="40" y="46.5" font-size="6" text-anchor="middle" fill="#333">테이프</text>`),'후드는 마스크 끈 위로, 손목·발목은 테이프로 밀봉'],
+  [sv(`<rect x="8" y="10" width="64" height="44" rx="4" fill="#e8f4fb" stroke="#6bb6e8"/><path d="M30 18 q10 10 0 30 h20 q-10 -20 0 -30z" fill="#fff" stroke="#999"/><g fill="#6bb6e8"><circle cx="16" cy="18" r="1.5"/><circle cx="20" cy="26" r="1.5"/><circle cx="14" cy="32" r="1.5"/></g>`),'위생설비에서 보호복을 안쪽으로 말아 벗고, 샤워 후 마스크는 마지막에']],
+  care:'보호복은 1회용 — 재사용 금지 · 석면이 묻은 작업복을 집에 가져가지 않기'},
+ night:{name:'건강한 야간근무 수칙',steps:[
+  [sv(`<rect x="8" y="8" width="64" height="48" rx="4" fill="#1d3557"/><rect x="16" y="34" width="48" height="12" rx="3" fill="#fff"/><circle cx="24" cy="32" r="5" fill="${SK}"/><text x="56" y="24" font-size="10" fill="#f4d03f">Zzz</text>`),'퇴근 후 바로 암막·조용한 곳에서 7시간 수면'],
+  [sv(`<ellipse cx="40" cy="44" rx="26" ry="8" fill="#eee" stroke="#aaa"/><ellipse cx="40" cy="40" rx="16" ry="6" fill="#e9c46a"/><path d="M56 14 l-30 26" stroke="#c0392b" stroke-width="2"/><text x="40" y="18" font-size="7" text-anchor="middle" fill="#333">가볍게</text>`),'야식은 가볍게, 기름진 음식·과식 피하기'],
+  [sv(`<path d="M26 22 h24 v24 q0 8 -12 8 q-12 0 -12 -8z" fill="#8b5a2b"/><path d="M50 28 q8 0 8 6 q0 6 -8 6" fill="none" stroke="#8b5a2b" stroke-width="3"/><line x1="18" y1="54" x2="62" y2="12" stroke="#c0392b" stroke-width="3"/>`),'퇴근 전 몇 시간은 커피·에너지음료 피하기'],
+  [sv(`<rect x="18" y="16" width="30" height="34" rx="4" fill="#fff" stroke="#666"/><text x="33" y="32" font-size="8" text-anchor="middle" fill="#c0392b">120</text><text x="33" y="42" font-size="8" text-anchor="middle" fill="#2563a8">80</text><path d="M48 30 h12 v10 h-12" fill="none" stroke="#666" stroke-width="2"/>`),'쉬는 날도 규칙적으로, 혈압·혈당 정기 측정']],
+  care:'교대는 아침→저녁→야간 정방향 순환 · 연속 야간근무는 2~3일 이내 권장(KOSHA 교대작업자 보건관리지침)'},
+ heat:{name:'온열질환 예방 수칙 (물·그늘·휴식)',steps:[
+  [sv(`<path d="M30 10 h20 l-2 44 h-16z" fill="#cfe8fa" stroke="#2563a8"/><rect x="31" y="26" width="18" height="27" fill="#6bb6e8"/>`),'목마르지 않아도 20분마다 물 한 컵'],
+  [sv(`<path d="M10 24 L40 8 L70 24Z" fill="#2a9d8f"/><line x1="40" y1="24" x2="40" y2="56" stroke="#555" stroke-width="2"/><circle cx="26" cy="40" r="5" fill="${SK}"/><rect x="20" y="45" width="12" height="11" fill="#5b7fa6"/>`),'그늘·냉방 휴게시설에서 휴식'],
+  [sv(`<circle cx="40" cy="32" r="22" fill="#fff" stroke="#333" stroke-width="2"/><path d="M40 32 L40 14 A18 18 0 0 1 55.6 23Z" fill="#f4a261"/><line x1="40" y1="32" x2="40" y2="16" stroke="#333" stroke-width="2"/><text x="40" y="48" font-size="7" text-anchor="middle" fill="#c0392b">33℃↑ 20분</text>`),'체감 33℃ 이상: 2시간마다 20분 이상 휴식'],
+  [sv(`<rect x="22" y="12" width="36" height="40" rx="6" fill="#c0392b"/><rect x="36" y="20" width="8" height="24" fill="#fff"/><rect x="28" y="28" width="24" height="8" fill="#fff"/>`),'어지럼·의식 흐림 시 작업 중지, 몸을 식히고 119']],
+  care:'쿨토시·냉각조끼·통풍 모자 활용 · 동료끼리 서로 상태 확인(2인 1조)'},
+ cold:{name:'한랭 작업 보호구 착용법',steps:[
+  [sv(`<rect x="20" y="10" width="14" height="44" rx="3" fill="#ddd"/><rect x="33" y="10" width="14" height="44" rx="3" fill="#f4a261"/><rect x="46" y="10" width="14" height="44" rx="3" fill="#2563a8"/><text x="27" y="62" font-size="6" text-anchor="middle">내의</text><text x="40" y="62" font-size="6" text-anchor="middle">보온</text><text x="53" y="62" font-size="6" text-anchor="middle">방풍</text>`),'내의·보온층·방풍복을 겹쳐 입기'],
+  [sv(`<rect x="12" y="14" width="24" height="30" rx="10" fill="#e76f51"/><path d="M44 30 h18 v18 h10 v8 h-28z" fill="#555"/>`),'방한장갑·방한화 착용'],
+  [sv(face(`<path d="M18 22 Q40 0 62 22 L62 28 H18Z" fill="#2563a8"/><rect x="14" y="28" width="8" height="12" rx="4" fill="#2563a8"/><rect x="58" y="28" width="8" height="12" rx="4" fill="#2563a8"/><path d="M24 50 Q40 60 56 50 L56 58 H24Z" fill="#e76f51"/>`)),'방한모·귀덮개·목도리로 머리와 목 보온'],
+  [sv(`<path d="M28 18 h24 v26 q0 8 -12 8 q-12 0 -12 -8z" fill="#fff" stroke="#999"/><path d="M34 12 q-3 -4 0 -8 M42 12 q-3 -4 0 -8" stroke="#c0392b" stroke-width="1.6" fill="none"/>`),'젖은 옷은 즉시 교체, 따뜻한 음료']],
+  care:'따뜻한 휴게시설에서 수시로 몸 녹이기 · 저체온 의심 시 즉시 따뜻한 곳으로 옮기기'},
+ airline:{name:'밀폐공간 출입 절차',steps:[
+  [sv(`<rect x="24" y="8" width="32" height="48" rx="5" fill="#f4d03f" stroke="#b7950b"/><rect x="29" y="14" width="22" height="14" fill="#222"/><text x="40" y="24" font-size="7" text-anchor="middle" fill="#7cfc00">O₂ 21%</text>`),'산소·유해가스 농도 측정'],
+  [sv(`<rect x="8" y="30" width="64" height="26" fill="#ddd" stroke="#999"/><circle cx="24" cy="18" r="10" fill="#fff" stroke="#555" stroke-width="2"/><path d="M24 10 v16 M16 18 h16" stroke="#555" stroke-width="2"/>${arr(34,18,60,40,'#2563a8')}`),'송풍기로 충분히 환기'],
+  [sv(face(`<path d="M24 20 Q40 6 56 20 L56 42 Q40 54 24 42Z" fill="#cfe8fa" stroke="#555" stroke-width="1.6"/><path d="M40 52 q10 6 30 4" stroke="#333" stroke-width="3" fill="none"/>`)),'송기마스크 또는 공기호흡기 착용'],
+  [sv(`<circle cx="22" cy="16" r="6" fill="${SK}"/><rect x="16" y="22" width="12" height="20" fill="#f4a261"/><rect x="40" y="36" width="32" height="20" fill="#555"/><circle cx="56" cy="40" r="5" fill="${SK}"/>${arr(30,26,46,34,'#2563a8')}`),'감시인 배치, 출입 인원 확인']],
+  care:'방진·방독마스크로는 산소결핍을 막을 수 없음 · 구조하러 들어갈 때도 공기호흡기 착용'},
+ lift:{name:'중량물 바르게 들기',steps:[
+  [sv(`<circle cx="30" cy="10" r="5" fill="${SK}" stroke="${SKS}"/><path d="M30 15 v22 M30 37 l-6 18 M30 37 l6 18 M30 20 l-8 10 M30 20 l8 10" stroke="#3f5f85" stroke-width="3" stroke-linecap="round"/><rect x="44" y="44" width="18" height="12" fill="#d4a373" stroke="#8a5a2b"/>`),'물건 가까이, 발은 어깨너비로'],
+  [sv(`<circle cx="30" cy="20" r="5" fill="${SK}" stroke="${SKS}"/><path d="M30 25 v14 M30 39 l10 6 l-4 12 M30 39 l-8 8 l2 10 M30 30 l12 10" stroke="#3f5f85" stroke-width="3" stroke-linecap="round" fill="none"/><rect x="40" y="40" width="18" height="12" fill="#d4a373" stroke="#8a5a2b"/>`),'허리는 펴고 무릎을 굽혀 앉는다'],
+  [sv(`<circle cx="30" cy="10" r="5" fill="${SK}" stroke="${SKS}"/><path d="M30 15 v22 M30 37 l-6 18 M30 37 l6 18 M30 22 l10 6" stroke="#3f5f85" stroke-width="3" stroke-linecap="round"/><rect x="36" y="24" width="18" height="12" fill="#d4a373" stroke="#8a5a2b"/>${arr(64,50,64,22,'#2a7a3b')}`),'물건을 몸에 붙이고 다리 힘으로 일어선다'],
+  [sv(`<circle cx="36" cy="10" r="5" fill="${SK}" stroke="${SKS}"/><path d="M36 15 v22 M36 37 l-6 18 M36 37 l6 18" stroke="#3f5f85" stroke-width="3" stroke-linecap="round"/><path d="M20 58 q16 8 32 0" stroke="#2a7a3b" stroke-width="2" fill="none"/>${arr(48,58,54,56,'#2a7a3b')}`),'허리를 비틀지 말고 발을 옮겨 방향 전환']],
+  care:'무거운 자재는 2인 1조·운반 장비 사용 · 작업 전후 스트레칭'},
+ helmet:{name:'용접 보호구 착용법',steps:[
+  [sv(`<rect x="18" y="10" width="44" height="30" rx="4" fill="#333"/><rect x="26" y="18" width="28" height="14" fill="#2a9d8f"/><text x="40" y="28" font-size="8" text-anchor="middle" fill="#fff">#11</text><text x="40" y="52" font-size="7" text-anchor="middle" fill="#333">차광번호 확인</text>`),'전류에 맞는 차광번호 필터 확인(피복아크 대략 10~13번)'],
+  [sv(`<path d="M18 12 Q40 0 62 12 L60 50 Q40 60 20 50Z" fill="#333"/><rect x="28" y="20" width="24" height="10" fill="#2a9d8f"/><path d="M16 14 Q40 -4 64 14" stroke="#e76f51" stroke-width="3" fill="none"/>${arr(66,24,66,12,'#e76f51')}`),'보안면 머리띠를 머리에 맞게 조절'],
+  [sv(`<rect x="10" y="14" width="22" height="30" rx="8" fill="#b08968"/><path d="M42 8 h24 v48 h-24z" fill="#b08968"/><path d="M46 8 q8 6 16 0" stroke="#7f5539" stroke-width="2" fill="none"/>`),'가죽 용접장갑·앞치마·발덮개 착용'],
+  [sv(face(`<rect x="25" y="23" width="13" height="9" rx="3" fill="#cfe8fa" stroke="#555"/><rect x="42" y="23" width="13" height="9" rx="3" fill="#cfe8fa" stroke="#555"/><line x1="38" y1="27" x2="42" y2="27" stroke="#555" stroke-width="1.4"/>`)),'보안면 안에도 보안경 착용(슬래그 제거 시 대비)']],
+  care:'렌즈가 긁히거나 깨지면 교체 · 자동차광 보안면은 배터리·센서 확인 · 흄 대책은 방진마스크 착용법 참고'}
+};
+
+/* ===================== 데이터 ===================== */
+const blank=()=>({id:Date.now()+''+Math.random().toString(36).slice(2,6),
+ name:'',age:'',sex:'남',empno:'',company:'',dept:'',examType:'배치전',examDate:'',clinic:'',doctor:'',joinDate:'',hours:'',
+ overall:'',fitness:'',mainFinding:'',nextDate:'',smoking:'',
+ bpS:'',bpD:'',height:'',weight:'',gripL:'',gripR:'',fvc:'',fev1:'',fvcPct:'',fev1Pct:'',ratio:'',spiro:'',cxr:'',
+ hearL:['','','','','',''],hearR:['','','','','',''],other:'',
+ factors:[],consultDate:'',counselor:'',place:'',consultNote:'',photos:[],eduDate:'',educator:'',eduText:'',ppeGive:[]});
+const demo=()=>[
+ Object.assign(blank(),{name:'예시 근로자1',age:'60',empno:'',company:'○○건설 △△현장',dept:'할석',examType:'배치전',examDate:'2024-12-20',clinic:'○○병원',doctor:'○○○',joinDate:'2024-12-20',hours:'8',
+  overall:'C2',fitness:'나',mainFinding:'경증 제한성 환기장애',nextDate:'2025-12-20',smoking:'확인 필요',
+  bpS:'120',bpD:'80',height:'178.2',weight:'63.2',gripL:'45.1',gripR:'45.5',fvc:'3.87',fev1:'3.02',fvcPct:'78',fev1Pct:'79',ratio:'78',spiro:'Restrictive',cxr:'정상',
+  hearL:['5','15','15','25','30','30'],hearR:['20','10','15','20','25','35'],
+  factors:[{key:'dust',label:'기타 광물성분진',grade:'C2',finding:'경증 제한성 환기장애(호흡기계)',action:'추적검사 1년 이내'},
+   {key:'noise',label:'소음',grade:'A',finding:'정상',action:'필요없음'},
+   {key:'vib',label:'진동(그 밖의 진동기계·기구)',grade:'A',finding:'정상',action:'필요없음'},
+   {key:'uv',label:'자외선',grade:'A',finding:'정상',action:'필요없음'}]}),
+ Object.assign(blank(),{name:'예시 근로자2',age:'47',company:'○○건설 △△현장',dept:'철골 용접',examType:'특수',examDate:'2026-06-12',clinic:'○○병원',doctor:'○○○',joinDate:'2025-03-02',hours:'8',
+  overall:'C1',fitness:'나',mainFinding:'고음역 청력 저하 관찰',nextDate:'2026-12-12',smoking:'흡연',
+  bpS:'146',bpD:'92',height:'171',weight:'82',fvcPct:'92',fev1Pct:'90',ratio:'81',spiro:'Normal',cxr:'정상',
+  hearL:['15','15','20','35','45','40'],hearR:['10','15','20','30','40','35'],other:'일반건강진단 혈압 결과와 연계 관리',
+  factors:[{key:'noise',label:'소음',grade:'C1',finding:'4kHz 청력 저하',action:'추적검사 6개월, 청력보호구 착용'},
+   {key:'weld',label:'용접흄(망간 등)',grade:'A',finding:'정상',action:'필요없음'},
+   {key:'arc',label:'용접 아크광선',grade:'A',finding:'정상',action:'필요없음'},
+   {key:'cr6',label:'크롬화합물(스테인리스 용접)',grade:'A',finding:'정상',action:'필요없음'}]}),
+ Object.assign(blank(),{name:'예시 근로자3',age:'55',company:'○○건설 △△현장',dept:'리모델링 해체',examType:'특수',examDate:'2026-08-20',clinic:'○○병원',doctor:'○○○',joinDate:'2026-02-01',hours:'8',
+  overall:'CN',fitness:'나',mainFinding:'수면장애 호소, 혈압 경계',nextDate:'2027-02-20',smoking:'비흡연',bpS:'136',bpD:'86',height:'168',weight:'70',
+  factors:[{key:'night',label:'야간작업',grade:'CN',finding:'수면장애(불면) 관찰',action:'수면위생 교육, 6개월 후 재평가'},
+   {key:'asbestos',label:'석면분진',grade:'A',finding:'정상',action:'필요없음'},
+   {key:'heat',label:'고열(폭염)',grade:'A',finding:'정상',action:'필요없음'},
+   {key:'msd',label:'중량물 취급',grade:'A',finding:'정상',action:'필요없음'}]})
+];
+let workers=[],cur=0;
+function save(){try{localStorage.setItem('hm_workers',JSON.stringify(workers))}catch(e){warn('브라우저 저장 공간이 부족합니다. [백업 저장]으로 파일을 보관하세요.')}}
+function load(){try{const s=localStorage.getItem('hm_workers');if(s)workers=JSON.parse(s)}catch(e){} if(!workers.length)workers=demo()}
+function warn(m){if(!warn.t){warn.t=1;alert(m);setTimeout(()=>warn.t=0,8000)}}
+const W=()=>workers[cur];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=v=>v===''||v==null||isNaN(+v)?null:+v;
+
+/* ===================== 입력폼 ===================== */
+function fld(k,label,type='text',opts){const v=W()[k]??'';
+ if(opts)return `<div class="f"><label>${label}</label><select data-k="${k}">${opts.map(o=>`<option ${o==v?'selected':''}>${o}</option>`).join('')}</select></div>`;
+ if(type==='area')return `<div class="f"><label>${label}</label><textarea data-k="${k}">${esc(v)}</textarea></div>`;
+ return `<div class="f"><label>${label}</label><input type="${type}" data-k="${k}" value="${esc(v)}"></div>`}
+function renderForm(){const w=W();
+ const hzOpts=Object.entries(HZ).map(([k,h])=>`<option value="${k}">${h.name}</option>`).join('');
+ document.getElementById('form').innerHTML=`
+ <h3>① 인적사항</h3>
+ <div class="row">${fld('name','성명')}${fld('empno','사번')}</div>
+ <div class="row three">${fld('age','나이','number')}${fld('sex','성별','',['남','여'])}${fld('hours','1일 폭로(시간)','number')}</div>
+ <div class="row">${fld('company','사업장')}${fld('dept','작업부서/공종')}</div>
+ <h3>② 검진 정보</h3>
+ <div class="row three">${fld('examType','검진 종류','',['배치전','일반','특수','수시'])}${fld('examDate','검진일','date')}${fld('joinDate','입사일','date')}</div>
+ <div class="row">${fld('clinic','검진기관')}${fld('doctor','검진의사')}</div>
+ <div class="row three">${fld('overall','종합판정','',['','A','C1','C2','D1','D2','CN','DN','R','U'])}${fld('fitness','업무적합','',['','가','나','다','라'])}${fld('nextDate','다음 추적검사일','date')}</div>
+ <div class="row">${fld('mainFinding','주요 소견')}${fld('smoking','흡연','',['','비흡연','흡연','과거흡연','확인 필요'])}</div>
+ <h3>③ 유해인자별 판정</h3>
+ <div id="hzList">${w.factors.map((f,i)=>`<div class="hz">
+   <div class="row"><div class="f"><label>유해인자 분류</label><select data-hz="${i}" data-hk="key">${hzOpts.replace(`value="${f.key}"`,`value="${f.key}" selected`)}</select></div>
+   <div class="f"><label>결과지 표기명</label><input data-hz="${i}" data-hk="label" value="${esc(f.label)}"></div></div>
+   <div class="row three"><div class="f"><label>판정</label><select data-hz="${i}" data-hk="grade">${['A','C1','C2','D1','D2','CN','DN','R','U'].map(g=>`<option ${g==f.grade?'selected':''}>${g}</option>`).join('')}</select></div>
+   <div class="f" style="grid-column:span 2"><label>검진소견</label><input data-hz="${i}" data-hk="finding" value="${esc(f.finding)}"></div></div>
+   <div class="row" style="grid-template-columns:1fr auto"><div class="f"><label>사후관리조치</label><input data-hz="${i}" data-hk="action" value="${esc(f.action)}"></div>
+   <button class="small-btn" style="align-self:end" onclick="rmHz(${i})">삭제</button></div></div>`).join('')}</div>
+ <button class="small-btn" onclick="addHz()">+ 유해인자 추가</button>
+ <h3>④ 측정값 (없으면 비워두면 해당 그래프가 빠집니다)</h3>
+ <div class="row three">${fld('bpS','혈압 최고','number')}${fld('bpD','혈압 최저','number')}${fld('cxr','흉부방사선')}</div>
+ <div class="row">${fld('height','신장(cm)','number')}${fld('weight','체중(kg)','number')}</div>
+ <div class="row">${fld('gripL','악력 좌','number')}${fld('gripR','악력 우','number')}</div>
+ <div class="row three">${fld('fvcPct','%FVC','number')}${fld('fev1Pct','FEV1 %','number')}${fld('ratio','FEV1/FVC %','number')}</div>
+ <div class="row three">${fld('fvc','FVC(L)','number')}${fld('fev1','FEV1(L)','number')}${fld('spiro','폐기능 판정')}</div>
+ <div class="f"><label>청력 (dB)</label></div>
+ <div class="hear"><span></span>${FREQ.map(f=>`<span style="text-align:center">${f}k</span>`).join('')}
+  <span>좌</span>${w.hearL.map((v,i)=>`<input data-ear="hearL" data-i="${i}" value="${esc(v)}">`).join('')}
+  <span>우</span>${w.hearR.map((v,i)=>`<input data-ear="hearR" data-i="${i}" value="${esc(v)}">`).join('')}</div>
+ <div class="row one" style="margin-top:6px">${fld('other','일반질병 소견 / 기타','area')}</div>
+ <h3>⑥ 보호구 교육·지급 (2쪽)</h3>
+ <div class="row">${fld('eduDate','교육·지급일','date')}${fld('educator','교육자')}</div>
+ <div class="row one">${fld('eduText','확인 문구 (비우면 기본 문구)','area')}</div>
+ <div class="hint">보호구명은 이상 소견에 해당하는 보호구로 자동으로 채워집니다. 수량을 비우면 출력물에 손으로 쓸 수 있습니다.</div>
+ ${giveList(w).map((g,i)=>`<div class="row" style="grid-template-columns:1fr 70px auto;align-items:end"><div class="f"><label>보호구명</label><input data-give="${i}" data-gk="name" value="${esc(g.name)}"></div><div class="f"><label>수량</label><input data-give="${i}" data-gk="qty" value="${esc(g.qty)}"></div><button class="small-btn" onclick="rmGive(${i})">삭제</button></div>`).join('')}
+ <button class="small-btn" onclick="addGive()">+ 보호구 추가</button> <button class="small-btn" onclick="resetGive()">해당 보호구로 다시 채우기</button>
+ <h3>⑤ 상담 기록 · 사진 (3쪽)</h3>
+ <div class="row three">${fld('consultDate','상담일','date')}${fld('counselor','상담자')}${fld('place','장소')}</div>
+ <div class="row one">${fld('consultNote','상담 내용 및 조치','area')}</div>
+ <div class="photos-in">${w.photos.map((p,i)=>`<div class="ph"><img src="${p.src}"><input data-ph="${i}" placeholder="사진 설명" value="${esc(p.cap)}" style="width:100%;margin-top:3px;font-size:12px"><button class="small-btn" onclick="rmPhoto(${i})" style="margin-top:3px">삭제</button></div>`).join('')}</div>
+ ${w.photos.length<4?`<label class="small-btn" style="display:inline-block;margin-top:6px">+ 상담 사진 추가 (최대 4장)<input type="file" accept="image/*" multiple hidden onchange="addPhotos(this)"></label>`:''}
+ <p class="hint">사진·결과는 이 기기 브라우저에만 저장되며 외부로 전송되지 않습니다. 정기적으로 [백업 저장]을 하세요.</p>`;
+}
+document.addEventListener('input',e=>{const t=e.target,w=W();if(!w)return;
+ if(t.dataset.k){w[t.dataset.k]=t.value}
+ else if(t.dataset.hz!=null){const f=w.factors[+t.dataset.hz];f[t.dataset.hk]=t.value;if(t.dataset.hk==='key'&&!f.label)f.label=HZ[t.value].name}
+ else if(t.dataset.ear){w[t.dataset.ear][+t.dataset.i]=t.value}
+ else if(t.dataset.ph!=null){w.photos[+t.dataset.ph].cap=t.value}
+ else if(t.dataset.give!=null){giveList(w)[+t.dataset.give][t.dataset.gk]=t.value}
+ else return;
+ if(t.dataset.k==='name')fillSel();
+ save();renderPages()});
+document.addEventListener('change',e=>{if(e.target.tagName==='SELECT'&&e.target.id!=='sel')e.target.dispatchEvent(new Event('input',{bubbles:true}))});
+function addHz(){W().factors.push({key:'dust',label:'',grade:'A',finding:'정상',action:'필요없음'});save();renderForm();renderPages()}
+function rmHz(i){W().factors.splice(i,1);save();renderForm();renderPages()}
+function rmPhoto(i){W().photos.splice(i,1);save();renderForm();renderPages()}
+function addPhotos(inp){const files=[...inp.files].slice(0,4-W().photos.length);let n=files.length;if(!n)return;
+ files.forEach(f=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const m=1200,s=Math.min(1,m/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=img.width*s;c.height=img.height*s;c.getContext('2d').drawImage(img,0,0,c.width,c.height);W().photos.push({src:c.toDataURL('image/jpeg',.75),cap:''});if(--n===0){save();renderForm();renderPages()}};img.src=r.result};r.readAsDataURL(f)})}
+
+/* ===================== 출력 페이지 ===================== */
+const tagc=g=>g==='A'?'tA':/^C/.test(g)?'tC':/^D/.test(g)?'tD':'tX';
+const boxc=g=>!g?'':g==='A'?'ok':/^D/.test(g)?'bad':'warn';
+const sorted=w=>[...w.factors].sort((a,b)=>(RANK[b.grade]||0)-(RANK[a.grade]||0));
+function worst(w){return w.overall||sorted(w)[0]?.grade||''}
+function dday(d){if(!d)return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((new Date(d)-t)/864e5)}
+function head(w,title,sub){return `<div class="ph1"><div><h1>${title}</h1><div class="sub">${sub}</div></div><div class="sub" style="text-align:right">${esc(w.name)||'(성명)'} · ${esc(w.dept)}<br>검진일 ${esc(w.examDate)} · ${esc(w.clinic)}</div></div>`}
+function foot(n){return `<div class="foot"><span>※ 결과지에서 정리한 내용입니다. 원본과 대조 후 사용하세요.</span><span>${n} / 3</span></div>`}
+
+function audiogram(w){const L=w.hearL.map(num),R=w.hearR.map(num);if(![...L,...R].some(v=>v!=null))return '';
+ const X=[50,114.2,178.3,215.8,242.5,280],mx=Math.max(60,...[...L,...R].filter(v=>v!=null).map(v=>Math.ceil(v/20)*20)),Y=d=>20+d*140/mx;
+ const grid=[];for(let d=0;d<=mx;d+=10)grid.push(`<line x1="40" y1="${Y(d)}" x2="290" y2="${Y(d)}"/>`);
+ const lab=[];for(let d=0;d<=mx;d+=20)lab.push(`<text x="34" y="${Y(d)+3}" text-anchor="end">${d}</text>`);
+ const line=(a,c,dash)=>{const p=a.map((v,i)=>v==null?null:`${X[i]},${Y(v)}`).filter(Boolean).join(' ');return `<polyline fill="none" stroke="${c}" stroke-width="1.6" ${dash?'stroke-dasharray="3 2"':''} points="${p}"/>`};
+ const six=a=>a[0]!=null&&a[1]!=null&&a[2]!=null&&a[4]!=null?((a[0]+2*a[1]+2*a[2]+a[4])/6).toFixed(1):null;
+ const sl=six(L),sr=six(R),ok=v=>v==null?'':(+v<=25?'정상':'저하');
+ return `<div class="sec">순음청력검사 <span class="mini">(dB HL)</span></div>
+ <svg viewBox="0 0 300 185" width="100%"><g font-size="8" fill="#555"><rect x="40" y="${Y(25)}" width="250" height="${160-Y(25)}" fill="#fff4f1"/><g stroke="#dde1e6">${grid.join('')}${X.map(x=>`<line x1="${x}" y1="20" x2="${x}" y2="160"/>`).join('')}</g>
+ <line x1="40" y1="${Y(25)}" x2="290" y2="${Y(25)}" stroke="#c0392b" stroke-dasharray="4 3"/><text x="288" y="${Y(25)-3}" text-anchor="end" fill="#c0392b">25dB</text>${lab.join('')}
+ ${FREQ.map((f,i)=>`<text x="${X[i]}" y="172" text-anchor="middle">${f}${i==5?'kHz':''}</text>`).join('')}</g>
+ ${line(R,'#c0392b')}${R.map((v,i)=>v==null?'':`<circle cx="${X[i]}" cy="${Y(v)}" r="3.5" fill="#fff" stroke="#c0392b" stroke-width="1.6"/>`).join('')}
+ ${line(L,'#2563a8',1)}${L.map((v,i)=>v==null?'':`<path d="M${X[i]-3.5} ${Y(v)-3.5}l7 7M${X[i]+3.5} ${Y(v)-3.5}l-7 7" stroke="#2563a8" stroke-width="1.8"/>`).join('')}
+ <g font-size="8"><circle cx="48" cy="9" r="3" fill="#fff" stroke="#c0392b" stroke-width="1.4"/><text x="54" y="12" fill="#c0392b">우측</text><path d="M85 6l6 6M91 6l-6 6" stroke="#2563a8" stroke-width="1.6"/><text x="95" y="12" fill="#2563a8">좌측</text></g></svg>
+ ${sl||sr?`<div class="mini">6분법 평균: 좌 ${sl??'-'} dB(${ok(sl)}) · 우 ${sr??'-'} dB(${ok(sr)}) · 25dB 이하 정상 범위</div>`:''}`}
+
+function spiro(w){const a=num(w.fvcPct),b=num(w.fev1Pct),c=num(w.ratio);if(a==null&&b==null&&c==null)return '';
+ const bar=(lab,v,ref)=>v==null?'':`<div class="lbl"><span>${lab}</span><span class="mini">기준 ${ref}% 이상</span></div><div class="mbar"><i style="width:${Math.min(v,120)/1.2}%;background:${v>=ref?'#4f9a5f':'#e9a23b'}"></i><b style="left:${ref/1.2}%"></b><span>${v}%</span></div>`;
+ return `<div class="sec">폐기능 검사 ${w.spiro?`<span class="mini">(판정: ${esc(w.spiro)})</span>`:''}</div>
+ ${bar('%FVC (노력성 폐활량, 예측치 대비)',a,80)}${bar('FEV1 % (1초량, 예측치 대비)',b,80)}${bar('FEV1/FVC',c,70)}
+ <div class="mini" style="margin-top:3px">${[w.fvc&&`FVC ${esc(w.fvc)} L`,w.fev1&&`FEV1 ${esc(w.fev1)} L`,w.cxr&&`흉부방사선 ${esc(w.cxr)}`].filter(Boolean).join(' · ')} · ▮ 기준선</div>`}
+
+function points(w){const P=[],d=dday(w.nextDate);
+ if(d!=null&&d<0)P.push(`<b>추적검사:</b> 기한(${esc(w.nextDate)})이 ${-d}일 지났습니다. 시행 여부와 결과를 확인하고, 미시행 시 일정을 잡습니다.`);
+ else if(d!=null&&d<=60)P.push(`<b>추적검사:</b> ${esc(w.nextDate)} (D-${d}) 예정 — 일정을 안내합니다.`);
+ const ab=sorted(w).filter(f=>f.grade!=='A'),ok=w.factors.filter(f=>f.grade==='A');
+ ab.forEach(f=>P.push(`<b>${esc(f.label||HZ[f.key].name)} (${f.grade}):</b> ${HZ[f.key].point}`));
+ if(ok.length)P.push(`<b>현재 정상(A):</b> ${ok.map(f=>esc(f.label||HZ[f.key].name)).join(', ')} — 보호구 착용을 유지하도록 지도합니다.`);
+ if(w.smoking==='흡연')P.push('<b>금연 상담:</b> 흡연자입니다. 금연 프로그램(보건소 금연클리닉 등)을 안내합니다.');
+ else if(w.smoking==='확인 필요'||!w.smoking)P.push('<b>흡연 여부:</b> 결과지 기재가 불명확하므로 상담 시 확인합니다.');
+ const s=num(w.bpS),dd=num(w.bpD);if((s&&s>=140)||(dd&&dd>=90))P.push(`<b>혈압:</b> ${s}/${dd} mmHg로 높습니다. 재측정과 병원 진료를 권하고, 고소·중량 작업 시 주의합니다.`);
+ if(w.other)P.push(`<b>기타 소견:</b> ${esc(w.other)}`);
+ if(ab.some(f=>['dust','weld','solvent'].includes(f.key)))P.push('<b>증상 확인:</b> 기침·가래·숨참·두통 등 증상 유무를 묻고 기록합니다.');
+ return P.slice(0,7)}
+
+function page1(w){const g=worst(w),d=dday(w.nextDate),bmi=num(w.height)&&num(w.weight)?(w.weight/((w.height/100)**2)).toFixed(1):null;
+ const basic=[w.bpS&&`<tr><th>혈압</th><td>${esc(w.bpS)}/${esc(w.bpD)} mmHg <span class="tag ${(+w.bpS>=140||+w.bpD>=90)?'tD':'tA'}">${(+w.bpS>=140||+w.bpD>=90)?'높음':'정상'}</span></td></tr>`,
+  w.height&&`<tr><th>신장/체중</th><td>${esc(w.height)} cm / ${esc(w.weight)} kg${bmi?` (BMI ${bmi})`:''}</td></tr>`,
+  w.gripL&&`<tr><th>악력 좌/우</th><td>${esc(w.gripL)} / ${esc(w.gripR)} kg</td></tr>`].filter(Boolean).join('');
+ const sp=spiro(w),au=audiogram(w);
+ return `<div class="page">${head(w,'건강진단 사후관리 상담지',`${esc(w.examType)} 건강진단 결과 요약`)}
+ <table><tr><th>성명</th><td>${esc(w.name)}</td><th>나이/성별</th><td>${esc(w.age)} / ${esc(w.sex)}</td><th>사번</th><td>${esc(w.empno)||'—'}</td></tr>
+ <tr><th>사업장</th><td colspan="3">${esc(w.company)}</td><th>작업부서</th><td>${esc(w.dept)}</td></tr>
+ <tr><th>입사일</th><td>${esc(w.joinDate)}</td><th>1일 폭로</th><td>${w.hours?esc(w.hours)+'시간':''}</td><th>흡연</th><td>${esc(w.smoking)}</td></tr>
+ <tr><th>유해인자</th><td colspan="5">${w.factors.map(f=>esc(f.label||HZ[f.key].name)).join(' · ')||'—'}</td></tr></table>
+ <div class="sec">판정 요약</div>
+ <div class="verdict">
+  <div class="vbox ${boxc(g)}"><div class="k">건강관리구분</div><div class="v">${g||'—'}</div><div class="d">${GRADE[g]||''}</div></div>
+  <div class="vbox ${w.fitness==='가'?'ok':w.fitness?'warn':''}"><div class="k">업무수행 적합여부</div><div class="v">${esc(w.fitness)||'—'}</div><div class="d">${FIT[w.fitness]||''}</div></div>
+  <div class="vbox ${boxc(g)}"><div class="k">주요 소견</div><div class="v txt">${esc(w.mainFinding)||'특이소견 없음'}</div></div>
+  <div class="vbox ${d==null?'':d<0?'bad':d<=60?'warn':'ok'}"><div class="k">추적검사 기한</div><div class="v txt">${esc(w.nextDate)||'해당 없음'}</div><div class="d"><b>${d==null?'':d<0?'기한 경과 — 시행 여부 확인':`D-${d}`}</b></div></div>
+ </div>
+ ${w.factors.length?`<div class="sec">유해인자별 판정 및 사후관리</div><table><tr><th>유해인자</th><th>구분</th><th>검진소견</th><th>사후관리조치</th></tr>
+ ${sorted(w).map(f=>`<tr><td>${esc(f.label||HZ[f.key].name)}</td><td style="text-align:center"><span class="tag ${tagc(f.grade)}">${f.grade}</span></td><td>${esc(f.finding)}</td><td>${f.grade!=='A'?'<b>':''}${esc(f.action)}${f.grade!=='A'?'</b>':''}</td></tr>`).join('')}</table>`:''}
+ <div class="grid2"><div>${sp}${basic?`<div class="sec">기본 측정</div><table>${basic}</table>`:''}</div><div>${au}</div></div>
+ <div class="sec">상담 포인트 (보건관리자 확인용)</div><ul>${points(w).map(p=>`<li>${p}</li>`).join('')}</ul>
+ ${foot(1)}</div>`}
+
+
+function defGive(w){return [...new Set(w.factors.filter(f=>f.grade!=='A').map(f=>HZ[f.key].ppe))].filter(k=>PPE_ITEM[k]).map(k=>({name:PPE_ITEM[k],qty:''}))}
+function giveList(w){if(!w.ppeGive||!w.ppeGive.length)w.ppeGive=defGive(w);return w.ppeGive}
+function addGive(){giveList(W()).push({name:'',qty:''});save();renderForm();renderPages()}
+function rmGive(i){W().ppeGive.splice(i,1);if(!W().ppeGive.length)W().ppeGive=[{name:'',qty:''}];save();renderForm();renderPages()}
+function resetGive(){W().ppeGive=defGive(W());save();renderForm();renderPages()}
+function eduBox(w){const rows=giveList(w).filter(g=>g.name||g.qty);const pad=Math.max(0,3-rows.length);
+ return `<div class="edu"><div class="sec" style="margin-top:0">보호구 착용 교육 및 지급 확인</div>
+ <div class="edutxt">${esc(w.eduText||EDU_TEXT)}</div>
+ <table><tr><th style="width:15%">교육·지급일</th><td style="width:35%">${esc(w.eduDate)}</td><th style="width:15%">교육자</th><td>${esc(w.educator)} <span class="mini">(서명)</span></td></tr></table>
+ <table style="margin-top:4px"><tr><th style="width:6%">No</th><th>보호구명</th><th style="width:12%">수량</th><th style="width:30%">수령자 서명</th></tr>
+ ${rows.map((g,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(g.name)}</td><td style="text-align:center">${esc(g.qty)}</td><td></td></tr>`).join('')}
+ ${Array.from({length:pad},(_,j)=>`<tr><td style="text-align:center">${rows.length+j+1}</td><td></td><td></td><td></td></tr>`).join('')}</table>
+ <div class="esign">위 내용을 확인함 &nbsp; 근로자 성명: <u>&nbsp;${esc(w.name)||'&nbsp;'.repeat(16)}&nbsp;</u> &nbsp; (서명) ______________</div></div>`}
+function page2(w){const fs=sorted(w).filter(f=>f.grade!=='A').slice(0,6);
+ const ppes=[...new Set(fs.map(f=>HZ[f.key].ppe))];
+ return `<div class="page p2 ${fs.length&&fs.length<=2?'roomy':''}">${head(w,'주의해야 할 직업성 질환과 예방법','검진 결과와 노출 유해인자 기준 · 예방 교육 자료(진단 아님)')}
+ <div class="mini" style="margin-bottom:5px">이번 검진에서 <b>이상 소견이 있는 유해인자만</b> 판정이 높은 순서로 표시했습니다. <span class="tag tD">D</span> 유소견 <span class="tag tC">C</span> 요관찰 <span class="tag tX">R·U</span> 재검·판정불가</div>
+ ${fs.length?fs.map(f=>{const h=HZ[f.key];return `<div class="dz ${/^D/.test(f.grade)?'hd':/^C/.test(f.grade)?'hi':''}">
+  <div class="ic">${ICON[h.icon]}<div>${h.name}</div><span class="tag ${tagc(f.grade)}">${f.grade}</span></div>
+  <div><h4>주의 질환</h4><div class="dis">${h.dis.join(' · ')}</div><div class="sym">● 이런 증상이 있으면 알리세요: ${h.sym}</div>${h.law?`<div class="sym law" style="color:#1d3557">● 기준: ${h.law}</div>`:''}${f.grade!=='A'?`<div class="sym" style="color:#b86e00">● 이번 검진: ${esc(f.finding)}</div>`:''}</div>
+  <div class="pv"><h4 style="margin:0 0 2px;font-size:10pt">예방법</h4><ul>${h.prev.map(p=>`<li>${p}</li>`).join('')}</ul></div></div>`}).join(''):`<div class="dz" style="display:block;text-align:center;padding:14px"><b style="font-size:11pt;color:#2a7a3b">이번 검진에서 유해인자 관련 이상 소견이 없습니다.</b><div class="mini" style="margin-top:4px">${w.factors.length?'노출 유해인자: '+w.factors.map(f=>esc(f.label||HZ[f.key].name)).join(', ')+' — 현재 보호구 착용을 유지하세요.':'입력폼 ③에서 유해인자를 추가하세요.'}</div></div>`}
+ ${ppes.length?`<div class="ppes n${Math.min(ppes.length,3)}">${ppes.map(k=>{const p=PPE[k];return `<div class="ppe"><h4>🦺 ${p.name}</h4><div class="steps">${p.steps.map((s,i)=>`<div class="step">${s[0]}<div><span class="n">${i+1}</span>${s[1]}</div></div>`).join('')}</div><div class="care">관리: ${p.care}</div></div>`}).join('')}</div>`:''}
+ ${eduBox(w)}
+ ${foot(2)}</div>`}
+
+/* 2쪽이 넘치면 단계적으로 줄이기 */
+function fitPage2(){const el=document.querySelector('.p2');if(!el)return;
+ for(const c of ['tight1','tight2','tight3','tight4','tight5']){if(el.scrollHeight<=el.clientHeight+1)break;el.classList.add(c)}}
+
+function page3(w){const ph=w.photos,cls=ph.length===1?'one':ph.length===2?'two':'';
+ const boxes=(ph.length?ph:[{},{},{},{}]).map(p=>`<div class="pbox"><div class="im">${p.src?`<img src="${p.src}">`:'<span class="empty">사진 첨부</span>'}</div><div class="cap">${esc(p.cap||'')}</div></div>`).join('');
+ return `<div class="page">${head(w,'근로자 건강상담 기록','사후관리 상담 사진 첨부')}
+ <table><tr><th>상담일</th><td>${esc(w.consultDate)}</td><th>상담자</th><td>${esc(w.counselor)}</td><th>장소</th><td>${esc(w.place)}</td></tr>
+ <tr><th>대상자</th><td>${esc(w.name)}</td><th>부서</th><td>${esc(w.dept)}</td><th>판정</th><td>${worst(w)} ${GRADE[worst(w)]?'('+GRADE[worst(w)]+')':''}</td></tr></table>
+ <div class="sec">상담 사진</div><div class="pgrid ${cls}">${boxes}</div>
+ <div class="sec">상담 내용 및 조치</div><div class="notebox">${esc(w.consultNote)}</div>
+ <table style="margin-top:8px"><tr><th style="width:18%">근로자 확인</th><td style="height:12mm">(서명)</td><th style="width:18%">상담자 확인</th><td>(서명)</td></tr></table>
+ ${foot(3)}</div>`}
+
+function renderPages(){const w=W();const sc=document.getElementById('scaler');const t=sc.style.transform;sc.style.transform='none';document.getElementById('pages').innerHTML=w?page1(w)+page2(w)+page3(w):'';fitPage2();sc.style.transform=t;fit()}
+function fit(){const pv=document.querySelector('.preview'),sc=document.getElementById('scaler'),pw=794;const s=Math.min(1,(pv.clientWidth-4)/pw);sc.style.transform=`scale(${s})`;sc.style.width=pw+'px';sc.style.height=(document.getElementById('pages').scrollHeight*s)+'px'}
+window.addEventListener('resize',fit);
+
+/* ===================== 목록·백업 ===================== */
+function fillSel(){document.getElementById('sel').innerHTML=workers.map((w,i)=>`<option value="${i}" ${i==cur?'selected':''}>${esc(w.name||'(이름 없음)')} ${w.dept?'· '+esc(w.dept):''}</option>`).join('')}
+document.getElementById('sel').onchange=e=>{cur=+e.target.value;renderForm();renderPages()};
+function addWorker(){workers.push(blank());cur=workers.length-1;save();fillSel();renderForm();renderPages()}
+function delWorker(){if(!confirm(`'${W().name||'이 근로자'}' 기록을 삭제할까요?`))return;workers.splice(cur,1);if(!workers.length)workers.push(blank());cur=0;save();fillSel();renderForm();renderPages()}
+function exportJSON(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(workers)],{type:'application/json'}));a.download=`사후관리_백업_${new Date().toISOString().slice(0,10)}.json`;a.click()}
+function importJSON(inp){const r=new FileReader();r.onload=()=>{try{workers=JSON.parse(r.result);cur=0;save();fillSel();renderForm();renderPages()}catch(e){alert('백업 파일을 읽을 수 없습니다.')}};r.readAsText(inp.files[0])}
+
+load();fillSel();renderForm();renderPages();
+const q=new URLSearchParams(location.search).get('w');if(q){cur=+q;fillSel();renderForm();renderPages()}
+</script>
+</body></html>
