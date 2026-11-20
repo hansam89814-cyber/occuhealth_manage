@@ -1,25 +1,64 @@
 <!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>보건관리 업무지원</title>
+<title>건설업 보건관리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Montserrat:wght@500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:#eef1f5;color:#1d1d1f}
-header{background:#1d3557;color:#fff;padding:36px 20px 30px}
-header h1{margin:0 auto;max-width:900px;font-size:28px}
-header p{margin:8px auto 0;max-width:900px;opacity:.85}
-main{max-width:900px;margin:0 auto;padding:24px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-a.card{display:block;background:#fff;border-radius:14px;padding:22px;text-decoration:none;color:inherit;border:2px solid transparent;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-a.card:hover,a.card:focus{border-color:#f4a261}
-.card h2{margin:0 0 8px;font-size:20px;color:#1d3557}
-.card p{margin:0 0 12px;line-height:1.55;font-size:15px}
-.card span{display:inline-block;background:#f4a261;color:#1d1d1f;font-weight:700;padding:8px 14px;border-radius:8px}
-.note{max-width:900px;margin:0 auto;padding:0 20px 30px;font-size:13px;color:#555;line-height:1.6}
+body{margin:0;word-break:keep-all;font-family:'Noto Sans KR','Malgun Gothic',sans-serif;color:#15201d;background:#fff}
+.wrap{min-height:100vh;display:flex;flex-wrap:wrap}
+aside{flex:1 1 420px;background:#0d3d33;color:#fff;padding:72px 56px;display:flex;flex-direction:column;justify-content:space-between;gap:48px;position:relative;overflow:hidden}
+aside .deco{position:absolute;left:-90px;bottom:-110px;width:380px;height:380px}
+.mark{width:40px;height:40px;border:1.5px solid #c9a46a;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
+h1{margin:0;font-weight:800;font-size:60px;line-height:1.15;letter-spacing:-2px}
+.en{margin:16px 0 0;font-family:'Montserrat',sans-serif;font-weight:500;font-size:21px;letter-spacing:3px;color:#c9a46a;line-height:1.5}
+main{flex:999 1 560px;min-width:0;padding:72px 72px 36px;display:flex;flex-direction:column}
+.list{flex:1;display:flex;flex-direction:column;justify-content:center}
+a.item{text-decoration:none;color:#15201d;display:flex;align-items:center;gap:28px;padding:44px 0;border-top:1px solid #e3e7e5}
+a.item:last-child{border-bottom:1px solid #e3e7e5}
+a.item:hover h2{color:#0d3d33}
+a.item:hover .go{background:#0d3d33}
+a.item:hover .go svg{stroke:#fff}
+a.item:focus-visible{outline:3px solid #c9a46a;outline-offset:6px}
+.ic{flex:none;width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.txt{flex:1;display:flex;flex-direction:column;gap:10px}
+h2{margin:0;font-weight:700;font-size:30px;letter-spacing:-.6px;transition:color .2s}
+.txt p{margin:0;font-size:16px;line-height:1.7;color:#55635f}
+.go{flex:none;width:56px;height:56px;border-radius:50%;border:1.5px solid #0d3d33;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.note{margin:40px 0 0;font-size:13px;color:#8a9692;line-height:1.6}
+@media(max-width:700px){aside{padding:48px 28px}h1{font-size:44px}.en{font-size:17px}main{padding:24px 24px 28px}a.item{gap:16px;padding:28px 0}.ic{width:56px;height:56px}.ic svg{width:26px;height:26px}h2{font-size:22px}.go{width:44px;height:44px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
-<header><h1>보건관리 업무지원</h1><p>건설현장 보건관리자용 프로그램 모음</p></header>
+<div class="wrap">
+<aside>
+  <svg class="deco" aria-hidden="true" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.6"/><circle cx="50" cy="50" r="34" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.6"/><path d="M44 30h12v14h14v12H56v14H44V56H30V44h14z" fill="rgba(255,255,255,0.08)"/></svg>
+  <div class="mark"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a46a" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+  <div style="position:relative">
+    <h1>건설업<br>보건관리</h1>
+    <p class="en">CONSTRUCTION HEALTH MANAGEMENT</p>
+  </div>
+  <div aria-hidden="true"></div>
+</aside>
 <main>
-<a class="card" href="msds.html"><h2>MSDS 관리대장</h2><p>MSDS PDF를 올리면 성분·CAS·법적 해당 여부·위험물 지정수량을 정리해 엑셀 관리대장으로 내보냅니다.</p><span>열기</span></a>
-<a class="card" href="aftercare.html"><h2>건강진단 사후관리</h2><p>근로자별 검진 결과를 입력하면 사후관리 상담지·질환 예방 교육자료·상담 기록을 A4 3장으로 출력합니다.</p><span>열기</span></a>
+  <div class="list">
+    <a class="item" href="msds.html">
+      <div class="ic" style="background:#eef4f2"><svg aria-hidden="true" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#0d3d33" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg></div>
+      <div class="txt"><h2>MSDS 관리대장</h2><p>MSDS PDF를 올리면 성분·CAS·법적 해당 여부·위험물 지정수량을 정리해 엑셀 관리대장으로 내보냅니다.</p></div>
+      <span class="go"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0d3d33" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
+    <a class="item" href="aftercare.html">
+      <div class="ic" style="background:#f7efe3"><svg aria-hidden="true" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9a6a2f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 8.6a4.9 4.9 0 0 0-8.8-3 4.9 4.9 0 0 0-8.8 3c0 5.4 8.8 11 8.8 11s8.8-5.6 8.8-11z"/><path d="M6 11h3l1.5-2.5 2 5 1.5-2.5h4"/></svg></div>
+      <div class="txt"><h2>건강진단 사후관리</h2><p>근로자별 검진 결과로 사후관리 상담지·예방 교육자료·상담 기록을 A4 3장으로 출력합니다.</p></div>
+      <span class="go"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0d3d33" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
+    <a class="item" href="warning.html">
+      <div class="ic" style="background:#fdeceb"><svg aria-hidden="true" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#b3261e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 22 12 12 21.5 2 12z"/><path d="M12 8v5"/><path d="M12 16.2v.1"/></svg></div>
+      <div class="txt"><h2>경고표지 · 관리요령</h2><p>MSDS PDF로 산업안전보건법 제115조 경고표지와 제114조 화학물질 관리요령을 만들어 인쇄합니다.</p></div>
+      <span class="go"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0d3d33" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
+  </div>
+  <p class="note">입력한 내용과 올린 파일은 이 기기의 브라우저 안에서만 처리·저장되며 외부로 전송되지 않습니다.</p>
 </main>
-<p class="note">입력한 내용과 올린 파일은 이 기기의 브라우저 안에서만 처리·저장되며 인터넷으로 전송되지 않습니다. 브라우저 기록을 지우면 입력 내용도 지워지니 각 프로그램의 [백업 저장]을 주기적으로 이용하세요.</p>
+</div>
 </body></html>

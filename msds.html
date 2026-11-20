@@ -489,6 +489,10 @@ function alertOnce(m) { if (!alertOnce.d) { alertOnce.d = 1; alert(m); setTimeou
 function save() { LS('msds_reg', REG); LS('msds_mydb', MYDB); LS('msds_def', { site: dSite.value, vendor: dVendor.value, work: dWork.value }); }
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const dbOf = cas => MYDB[cas] || BASE_DB[cas] || null;
+/* 올린 PDF는 경고표지·관리요령 페이지로 넘기기 위해 이 브라우저(IndexedDB)에만 보관 */
+function idb() { return new Promise((res, rej) => { const r = indexedDB.open('msds_pdfs', 1); r.onupgradeneeded = () => r.result.createObjectStore('pdfs'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+async function pdfPut(id, name, bytes) { try { const db = await idb(); await new Promise((res, rej) => { const tx = db.transaction('pdfs', 'readwrite'); tx.objectStore('pdfs').put({ name, bytes }, id); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); return true; } catch (e) { return false; } }
+async function pdfDel(ids) { try { const db = await idb(); const tx = db.transaction('pdfs', 'readwrite'); ids.forEach(id => tx.objectStore('pdfs').delete(id)); } catch (e) { } }
 
 /* ================= PDF 읽기 ================= */
 let pdfjs = null;
@@ -565,7 +569,7 @@ function render() {
     const models = pc && !pc.single && pc.models ? pc.models : null;
     const hzBadge = p.hzEst ? '<span class="badge b-warn">추정</span>' : p.hzSrc ? `<span class="badge b-info">${esc(p.hzSrc)}</span>` : '';
     return `<div class="card">
-    <div class="top"><span class="ttl">${pi + 1}. ${esc(p.product || '(제품명)')}</span><span class="src">${esc(p.file || '직접 입력')} <button class="btn sm" onclick="delProd(${pi})">삭제</button></span></div>
+    <div class="top"><span class="ttl">${pi + 1}. ${esc(p.product || '(제품명)')}</span><span class="src">${esc(p.file || '직접 입력')} ${p.hasPdf ? `<a class="btn sm" style="text-decoration:none" href="warning.html#pdf=${encodeURIComponent(p.id)}">경고표지·관리요령 만들기</a>` : ''} <button class="btn sm" onclick="delProd(${pi})">삭제</button></span></div>
     <div class="hd">
       ${fieldP(pi, 'product', '제품명', 'wide')}${fieldP(pi, 'maker', '제조업체')}${fieldP(pi, 'vendor', '협력업체')}${fieldP(pi, 'work', '공종')}
       ${fieldP(pi, 'use', '사용 용도', 'wide')}
@@ -618,10 +622,10 @@ document.addEventListener('change', e => {
   save(); render();
 });
 function setModel(pi, m) { applyModel(REG[pi], m); save(); render(); }
-function delProd(pi) { if (confirm('이 제품을 목록에서 삭제할까요?')) { REG.splice(pi, 1); save(); render(); } }
+function delProd(pi) { if (confirm('이 제품을 목록에서 삭제할까요?')) { pdfDel([REG[pi].id]); REG.splice(pi, 1); save(); render(); } }
 function delComp(pi, ci) { REG[pi].comps.splice(ci, 1); save(); render(); }
 function addComp(pi) { REG[pi].comps.push({ name: '', cas: '', valid: null, conc: '', max: null, b: false, h: false, k: false, s: false, p: false, m: '', e: '', chem: '', twa: '', src: [], diff: [] }); save(); render(); }
-function clearAll() { if (confirm('등록한 MSDS 목록을 모두 지울까요? (수정한 기준표는 유지됩니다)')) { REG = []; save(); render(); } }
+function clearAll() { if (confirm('등록한 MSDS 목록을 모두 지울까요? (수정한 기준표는 유지됩니다)')) { pdfDel(REG.map(p => p.id)); REG = []; save(); render(); } }
 
 async function addFiles(files) {
   const busy = document.getElementById('busy'); busy.style.display = 'flex';
@@ -632,7 +636,9 @@ async function addFiles(files) {
       const chars = pages.reduce((a, p) => a + p.items.reduce((b, i) => b + i.str.length, 0), 0);
       if (chars < 200) { REG.push(Object.assign(buildProduct({ product: f.name.replace(/\.pdf$/i, ''), maker: '', flam: false, hazmat: { cls: '', qty: '', src: '', est: false, note: '' }, comp: { error: '글자가 없는 스캔본 PDF입니다.' }, regs: {} }, f.name))); continue; }
       const parsed = MSDS.parse(pages, f.name);
-      REG.push(buildProduct(parsed, f.name));
+      const prod = buildProduct(parsed, f.name);
+      prod.hasPdf = await pdfPut(prod.id, f.name, new Uint8Array(await f.arrayBuffer()));
+      REG.push(prod);
     } catch (err) { console.error(err); REG.push(buildProduct({ product: f.name, maker: '', flam: false, hazmat: { cls: '', qty: '', src: '', est: false, note: '' }, comp: { error: 'PDF를 읽지 못했습니다: ' + err.message }, regs: {} }, f.name)); }
   }
   busy.style.display = 'none'; save(); render();
