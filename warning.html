@@ -74,7 +74,7 @@ legend small{font-weight:400;color:#6b7a75;margin-left:6px}
   <div id="work"></div>
   <section class="card"><h2>입력한 번역 백업</h2><p class="hint">직접 입력한 번역은 이 브라우저에만 저장됩니다. 가끔 내려받아 보관하고, 다른 PC에서는 불러오기로 합치세요. 기존 앱에서 내려받은 user_dictionary.json도 불러올 수 있습니다.</p>
     <div class="row"><button class="btn" id="udDown" type="button">입력한 번역 내려받기 (user_dictionary.json)</button><label class="btn" style="display:inline-block">백업 불러오기<input id="udUp" type="file" accept=".json,application/json" hidden></label><span id="udMsg" class="note"></span></div></section>
-  <p class="note">입력한 내용과 올린 파일은 이 기기의 브라우저 안에서만 처리·저장되며 외부로 전송되지 않습니다.</p>
+  <p class="note">입력한 내용과 올린 파일은 이 기기의 브라우저 안에서만 처리·저장되며 외부로 전송되지 않습니다. · 버전 2026-11-20 C</p>
 </main>
 <div class="busy" id="busy">MSDS를 읽는 중…</div>
 
@@ -130,7 +130,7 @@ legend small{font-weight:400;color:#6b7a75;margin-left:6px}
   function charsFromItems(items, pageH) {
     const chs = [];
     for (const it of items) {
-      const s = it.str; if (!s || !s.trim()) continue;   // pdf.js가 간격에 끼워 넣은 공백 항목은 버리고 실제 위치로 판단
+      const s = it.str; if (!s) continue;
       const size = it.size || 10, base = pageH - it.y;
       const arr = [...s], tot = arr.reduce((a, c) => a + wt(c), 0) || 1, unit = (it.w || size * tot * 0.6) / tot;
       let x = it.x;
