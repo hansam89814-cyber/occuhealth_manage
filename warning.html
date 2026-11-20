@@ -48,6 +48,9 @@ legend small{font-weight:400;color:#6b7a75;margin-left:6px}
 .prev.on{display:block}
 .frame{width:100%;height:1150px;border:1px solid #cfd6d3;border-radius:8px;background:#fff}
 .note{font-size:12.5px;color:#8a9692;margin:0}
+.langs{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.langs label{display:flex;align-items:center;gap:5px;border:1px solid #cfd6d3;border-radius:999px;padding:5px 11px;font-size:13.5px;color:#15201d;cursor:pointer}.langs label.on{background:#eef4f2;border-color:#0d3d33}.langs input{accent-color:#0d3d33}
+.miss{display:flex;flex-direction:column;gap:4px;margin:8px 0}.miss input{font:inherit;font-size:14px;padding:7px 9px;border:1px solid #cfd6d3;border-radius:6px}
+.ok{background:#e9f6ee;border:1px solid #bfe3cc;color:#155d2f;border-radius:8px;padding:8px 12px;font-size:13.5px;margin:6px 0}
 .busy{position:fixed;inset:0;background:rgba(255,255,255,.75);display:none;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#0d3d33;z-index:50}
 @media(max-width:700px){.grid{grid-template-columns:1fr}.frame{height:800px}}
 </style></head><body>
@@ -61,12 +64,16 @@ legend small{font-weight:400;color:#6b7a75;margin-left:6px}
     <p class="hint">원본 MSDS 문장은 줄이거나 고치지 않고 '선택'만 합니다.</p>
     <div class="grid" style="margin-bottom:14px">
       <label class="f">사업장명<input id="site" autocomplete="off"></label>
+      <div class="f" style="font-size:13px;color:#55635f">외국어 선택 (선택한 언어마다 별도 페이지로 출력)<div id="langs" class="langs"></div></div>
     </div>
+    <div id="langWarn"></div>
     <div class="drop" id="drop"><b>MSDS PDF를 끌어다 놓거나 눌러서 선택</b><br><span style="font-size:13px">한 번에 한 제품씩 만듭니다</span></div>
     <input id="file" type="file" accept="application/pdf" hidden>
     <div id="fromReg"></div>
   </section>
   <div id="work"></div>
+  <section class="card"><h2>입력한 번역 백업</h2><p class="hint">직접 입력한 번역은 이 브라우저에만 저장됩니다. 가끔 내려받아 보관하고, 다른 PC에서는 불러오기로 합치세요. 기존 앱에서 내려받은 user_dictionary.json도 불러올 수 있습니다.</p>
+    <div class="row"><button class="btn" id="udDown" type="button">입력한 번역 내려받기 (user_dictionary.json)</button><label class="btn" style="display:inline-block">백업 불러오기<input id="udUp" type="file" accept=".json,application/json" hidden></label><span id="udMsg" class="note"></span></div></section>
   <p class="note">입력한 내용과 올린 파일은 이 기기의 브라우저 안에서만 처리·저장되며 외부로 전송되지 않습니다.</p>
 </main>
 <div class="busy" id="busy">MSDS를 읽는 중…</div>
@@ -693,6 +700,154 @@ ${rowsFa}
   if (typeof module !== 'undefined') module.exports = API; else G.LabelCore = API;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
+<script>/* GHS 그림문자 판별 — msds_core.py의 _arr/_corr/_squares/_strip_match/match_pictograms를 옮긴 것.
+   Pillow의 BICUBIC 축소와 GaussianBlur(상자 흐림 3회)를 같은 방식으로 계산한다.
+   이미지 형식: {w, h, c:3, d: Uint8Array(RGB)} */
+(function (G) {
+  'use strict';
+  const pyRound = x => { const f = Math.floor(x), r = x - f; if (r > 0.5) return f + 1; if (r < 0.5) return f; return f % 2 === 0 ? f : f + 1; };
+  const clip8 = v => v < 0 ? 0 : v > 255 ? 255 : v;
+
+  function fromRGBA(w, h, rgba) {            // 투명 부분은 흰 바탕에 합성
+    const d = new Uint8Array(w * h * 3);
+    for (let i = 0, j = 0; i < w * h; i++, j += 4) {
+      const a = rgba[j + 3] / 255;
+      d[i * 3] = Math.round(rgba[j] * a + 255 * (1 - a)); d[i * 3 + 1] = Math.round(rgba[j + 1] * a + 255 * (1 - a)); d[i * 3 + 2] = Math.round(rgba[j + 2] * a + 255 * (1 - a));
+    }
+    return { w, h, c: 3, d };
+  }
+  const Lval = (r, g, b) => (r * 19595 + g * 38470 + b * 7471 + 0x8000) >> 16;
+  function toL(im) { if (im.c === 1) return im; const d = new Uint8Array(im.w * im.h); for (let i = 0; i < im.w * im.h; i++) d[i] = Lval(im.d[i * 3], im.d[i * 3 + 1], im.d[i * 3 + 2]); return { w: im.w, h: im.h, c: 1, d }; }
+  function inkMask(im) {                     // 흰색과의 차이(회색조) > 40
+    const m = new Uint8Array(im.w * im.h);
+    for (let i = 0; i < im.w * im.h; i++) m[i] = Lval(255 - im.d[i * 3], 255 - im.d[i * 3 + 1], 255 - im.d[i * 3 + 2]) > 40 ? 1 : 0;
+    return m;
+  }
+  function crop(im, x0, y0, x1, y1, fill = 0) {
+    const w = Math.max(0, x1 - x0), h = Math.max(0, y1 - y0), c = im.c, d = new Uint8Array(w * h * c).fill(fill);
+    for (let y = 0; y < h; y++) { const sy = y0 + y; if (sy < 0 || sy >= im.h) continue; for (let x = 0; x < w; x++) { const sx = x0 + x; if (sx < 0 || sx >= im.w) continue; for (let k = 0; k < c; k++) d[(y * w + x) * c + k] = im.d[(sy * im.w + sx) * c + k]; } }
+    return { w, h, c, d };
+  }
+  function padSquare(im) {
+    const side = Math.max(im.w, im.h), c = im.c, d = new Uint8Array(side * side * c).fill(255);
+    const ox = Math.floor((side - im.w) / 2), oy = Math.floor((side - im.h) / 2);
+    for (let y = 0; y < im.h; y++) for (let x = 0; x < im.w; x++) for (let k = 0; k < c; k++) d[((y + oy) * side + x + ox) * c + k] = im.d[(y * im.w + x) * c + k];
+    return { w: side, h: side, c, d };
+  }
+  /* Pillow ImagingResample(BICUBIC) */
+  const bicubic = x => { const a = -0.5; x = Math.abs(x); if (x < 1) return ((a + 2) * x - (a + 3)) * x * x + 1; if (x < 2) return (((x - 5) * x + 8) * x - 4) * a; return 0; };
+  function coeffs(inSize, outSize) {
+    const scale = inSize / outSize, fs = Math.max(scale, 1), support = 2 * fs, ss = 1 / fs, out = [];
+    for (let xx = 0; xx < outSize; xx++) {
+      const center = (xx + 0.5) * scale;
+      const xmin = Math.max(Math.trunc(center - support + 0.5), 0), xmax = Math.min(Math.trunc(center + support + 0.5), inSize) - xmin;
+      const k = []; let ww = 0;
+      for (let x = 0; x < xmax; x++) { const w = bicubic((x + xmin - center + 0.5) * ss); k.push(w); ww += w; }
+      out.push([xmin, ww ? k.map(v => v / ww) : k]);
+    }
+    return out;
+  }
+  function resize(im, W, H) {
+    const c = im.c;
+    let src = im;
+    if (W !== im.w) {
+      const cf = coeffs(im.w, W), d = new Uint8Array(W * im.h * c);
+      for (let y = 0; y < im.h; y++) for (let x = 0; x < W; x++) { const [x0, k] = cf[x]; for (let ch = 0; ch < c; ch++) { let s = 0; for (let i = 0; i < k.length; i++) s += im.d[(y * im.w + x0 + i) * c + ch] * k[i]; d[(y * W + x) * c + ch] = clip8(Math.round(s)); } }
+      src = { w: W, h: im.h, c, d };
+    }
+    if (H !== src.h) {
+      const cf = coeffs(src.h, H), d = new Uint8Array(W * H * c);
+      for (let y = 0; y < H; y++) { const [y0, k] = cf[y]; for (let x = 0; x < W; x++) for (let ch = 0; ch < c; ch++) { let s = 0; for (let i = 0; i < k.length; i++) s += src.d[((y0 + i) * W + x) * c + ch] * k[i]; d[(y * W + x) * c + ch] = clip8(Math.round(s)); } }
+      src = { w: W, h: H, c, d };
+    }
+    return src;
+  }
+  /* Pillow GaussianBlur = 확장 상자 흐림 3회 (가로 모두 → 세로 모두) */
+  function gaussRadius(radius, passes) {
+    const s2 = radius * radius / passes, L = Math.sqrt(12 * s2 + 1), l = Math.floor((L - 1) / 2);
+    let a = (2 * l + 1) * (l * (l + 1) - 3 * s2); a /= 6 * (s2 - (l + 1) * (l + 1));
+    return l + a;
+  }
+  function boxLine(src, n, get, set, fr) {
+    const r = Math.floor(fr), frac = fr - r, div = 2 * fr + 1, cl = i => i < 0 ? 0 : i >= n ? n - 1 : i;
+    const line = new Float64Array(n); for (let i = 0; i < n; i++) line[i] = get(i);
+    for (let x = 0; x < n; x++) { let s = 0; for (let i = -r; i <= r; i++) s += line[cl(x + i)]; s += frac * (line[cl(x - r - 1)] + line[cl(x + r + 1)]); set(x, clip8(Math.round(s / div))); }
+  }
+  function gaussianBlur(im, radius) {
+    const fr = gaussRadius(radius, 3), w = im.w, h = im.h, d = new Uint8Array(im.d);
+    for (let p = 0; p < 3; p++) for (let y = 0; y < h; y++) boxLine(d, w, i => d[y * w + i], (i, v) => { d[y * w + i] = v; }, fr);
+    for (let p = 0; p < 3; p++) for (let x = 0; x < w; x++) boxLine(d, h, i => d[i * w + x], (i, v) => { d[i * w + x] = v; }, fr);
+    return { w, h, c: 1, d };
+  }
+  function centered(im) { const n = im.w * im.h, a = new Float64Array(n); let m = 0; for (let i = 0; i < n; i++) { a[i] = im.d[i] / 255; m += a[i]; } m /= n; for (let i = 0; i < n; i++) a[i] -= m; return a; }
+
+  function arr(im) {
+    let rgb = im;
+    const m = inkMask(rgb);
+    let x0 = rgb.w, y0 = rgb.h, x1 = -1, y1 = -1;
+    for (let y = 0; y < rgb.h; y++) for (let x = 0; x < rgb.w; x++) if (m[y * rgb.w + x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 >= 0) rgb = padSquare(crop(rgb, x0, y0, x1 + 1, y1 + 1));
+    const g = toL(resize(rgb, 64, 64));
+    const full = centered(gaussianBlur(resize(g, 32, 32), 1.0));
+    const inner = centered(gaussianBlur(resize(crop(g, 14, 14, 50, 50), 32, 32), 0.8));
+    return [full, inner];
+  }
+  function corr1(a, b) { let ab = 0, aa = 0, bb = 0; for (let i = 0; i < a.length; i++) { ab += a[i] * b[i]; aa += a[i] * a[i]; bb += b[i] * b[i]; } return ab / (Math.sqrt(aa * bb) + 1e-9); }
+  const corr = (a, b) => 0.5 * corr1(a[0], b[0]) + 0.5 * corr1(a[1], b[1]);
+  function rank(a, refs) { return Object.keys(refs).map(k => [Math.max(...refs[k].map(r => corr(a, r))), k]).sort((p, q) => q[0] - p[0] || (q[1] > p[1] ? 1 : -1)); }
+
+  function inkCols(im) { const m = inkMask(im), cols = new Array(im.w).fill(false); for (let y = 0; y < im.h; y++) for (let x = 0; x < im.w; x++) if (m[y * im.w + x]) cols[x] = true; return cols; }
+  function squares(im) {
+    const w = im.w, h = im.h, r = w / h; let parts = [];
+    if (r >= 1.6) {
+      const cols = inkCols(im); let segs = [], start = null;
+      [...cols, false].forEach((on, x) => {
+        if (on && start === null) start = x;
+        else if (!on && start !== null) { if (segs.length && start - segs[segs.length - 1][1] <= 2) segs[segs.length - 1] = [segs[segs.length - 1][0], x]; else segs.push([start, x]); start = null; }
+      });
+      segs = segs.filter(s => s[1] - s[0] >= 0.5 * h);
+      if (segs.length >= 2) parts = segs.map(([a, b]) => crop(im, a, 0, b, h));
+      else { const n = Math.max(2, pyRound(r)), pw = w / n; for (let i = 0; i < n; i++) parts.push(crop(im, Math.trunc(i * pw), 0, Math.trunc((i + 1) * pw), h)); }
+    } else parts = [im];
+    return parts.map(padSquare);
+  }
+  function stripMatch(im, refs) {
+    const w = im.w, h = im.h, cols = inkCols(im);
+    const xs = cols.map((v, i) => v ? i : -1).filter(i => i >= 0);
+    const [xa, xb] = xs.length ? [xs[0], xs[xs.length - 1] + 1] : [0, w];
+    const n = Math.max(2, pyRound((xb - xa) / (0.97 * h)));
+    const found = [];
+    for (let i = 0; i < n; i++) {
+      const cx = xa + (i + 0.5) * (xb - xa) / n, x0 = Math.trunc(Math.max(0, Math.min(w - h, cx - h / 2)));
+      const sc = rank(arr(crop(im, x0, 0, x0 + h, h)), refs);
+      found.push(sc[0][0] >= 0.62 && sc[0][0] - sc[1][0] >= 0.10 ? sc[0][1] : null);
+    }
+    if (found.every(Boolean)) return found;
+    const picks = [], step = Math.max(2, Math.floor(h / 20));
+    for (let x = 0; x < Math.max(1, w - h + 1); x += step) {
+      const sc = rank(arr(crop(im, x, 0, Math.min(w, x + h), h)), refs);
+      if (sc[0][0] >= 0.62 && sc[0][0] - sc[1][0] >= 0.10) picks.push([sc[0][0], x, sc[0][1]]);
+    }
+    const chosen = [];
+    for (const p of picks.sort((a, b) => b[0] - a[0] || b[1] - a[1])) if (chosen.every(c => Math.abs(p[1] - c[1]) > 0.6 * h)) chosen.push(p);
+    return chosen.sort((a, b) => a[1] - b[1]).map(c => c[2]);
+  }
+  function matchPictograms(imgs, refs) {
+    const found = []; let unknown = 0;
+    const sorted = [...imgs].sort((a, b) => pyRound(a.bbox[1] / 25) - pyRound(b.bbox[1] / 25) || a.bbox[0] - b.bbox[0]);
+    for (const it of sorted) {
+      const im = it.img;
+      if (im.w / im.h >= 1.6) { for (const k of stripMatch(im, refs)) if (!found.includes(k)) found.push(k); continue; }
+      const sc = rank(arr(squares(im)[0]), refs);
+      if (sc[0][0] >= 0.62 && sc[0][0] - sc[1][0] >= 0.10) { if (!found.includes(sc[0][1])) found.push(sc[0][1]); }
+      else if (sc[0][0] >= 0.45) unknown++;
+    }
+    return [found, unknown];
+  }
+  const API = { fromRGBA, arr, corr, rank, matchPictograms, resize, gaussianBlur, toL };
+  if (typeof module !== 'undefined') module.exports = API; else G.Pict = API;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
 <script>
 {
 const C = window.LabelCore;
@@ -702,7 +857,19 @@ const LS = (k, v) => { try { if (v === undefined) return JSON.parse(localStorage
 const D = new C.Dictionary(JSON.parse(document.getElementById('dictjson').textContent), LS('label_user_dict') || undefined);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const $ = id => document.getElementById(id);
-const site = $('site'); site.value = LS('label_site') || ''; site.oninput = () => { LS('label_site', site.value); updateButtons(); };
+const site = $('site'); site.value = LS('label_site') || ''; site.oninput = () => { LS('label_site', site.value); if (A) keepScroll(render); };
+let LANGS = LS('label_langs') || ['en'], allowPartial = false;
+function renderLangs() {
+  $('langs').innerHTML = C.FOREIGN.map(k => `<label class="${LANGS.includes(k) ? 'on' : ''}" title="신뢰도: ${esc(D.meta.reliability[k] || '')}"><input type="checkbox" data-lang="${k}" ${LANGS.includes(k) ? 'checked' : ''}>${C.LANG_NAMES[k]}</label>`).join('');
+  const w = [];
+  if (LANGS.length) w.push('<div class="info">신뢰도: ' + LANGS.map(k => `${C.LANG_NAMES[k]} ${esc(D.meta.reliability[k] || '')}`).join(' · ') + '</div>');
+  if (LANGS.includes('km')) w.push('<div class="warn">크메르어는 원어민 검수 전 번역입니다. 현장 게시 전에 반드시 원어민 확인을 받으세요.</div>');
+  if (LANGS.includes('si')) w.push('<div class="warn">싱할라어는 화면 제목 등 고정 문구만 번역되어 있고(원어민 검수 전), 위험·예방조치 문장은 비어 있습니다. 아래 입력창에 검수된 번역을 넣거나, 현장 게시 전에 반드시 원어민 확인을 받으세요.</div>');
+  if (LANGS.includes('vi')) w.push('<div class="info">베트남어는 현지 근로자 확인을 권장합니다.</div>');
+  $('langWarn').innerHTML = w.join('');
+}
+renderLangs();
+const saveUser = () => LS('label_user_dict', D.user);
 
 /* ---------- PDF 읽기 (pdf.js 내장) ---------- */
 let pdfjs = null;
@@ -723,9 +890,51 @@ async function readPages(bytes) {
   for (let i = 1; i <= doc.numPages; i++) {
     const pg = await doc.getPage(i); const vp = pg.getViewport({ scale: 1 }); const tc = await pg.getTextContent();
     const items = tc.items.filter(it => 'str' in it).map(it => ({ str: it.str, x: it.transform[4], y: it.transform[5], w: it.width, size: Math.hypot(it.transform[2], it.transform[3]) || Math.abs(it.transform[0]) }));
-    pages.push({ words: C.pageWords(items, vp.height), images: [] });
+    pages.push({ words: C.pageWords(items, vp.height), images: await pageImages(lib, pg, vp) });
   }
   return pages;
+}
+/* 쪽 안의 그림 위치(그림문자 후보)를 찾아 144dpi로 그려 잘라낸다 (pdfplumber와 같은 기준) */
+async function pageImages(lib, pg, vp) {
+  const ol = await pg.getOperatorList(), O = lib.OPS, st = [];
+  let m = [1, 0, 0, 1, 0, 0];
+  const mul = (a, b) => [a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1], a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3], a[0] * b[4] + a[2] * b[5] + a[4], a[1] * b[4] + a[3] * b[5] + a[5]];
+  const boxes = [];
+  for (let i = 0; i < ol.fnArray.length; i++) {
+    const fn = ol.fnArray[i], a = ol.argsArray[i];
+    if (fn === O.save) st.push(m);
+    else if (fn === O.restore) m = st.pop() || m;
+    else if (fn === O.transform) m = mul(m, a);
+    else if (fn === O.paintFormXObjectBegin) { st.push(m); if (a && a[0]) m = mul(m, a[0]); }
+    else if (fn === O.paintFormXObjectEnd) m = st.pop() || m;
+    else if (fn === O.paintImageXObject || fn === O.paintInlineImageXObject || fn === O.paintImageMaskXObject) {
+      const pts = [[0, 0], [1, 0], [0, 1], [1, 1]].map(([u, v]) => vp.convertToViewportPoint(m[0] * u + m[2] * v + m[4], m[1] * u + m[3] * v + m[5]));
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      const b = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], w = b[2] - b[0], h = b[3] - b[1];
+      if (h > 14 && h < 130 && w > 14 && w < 420 && w / Math.max(h, 1e-6) > 0.7 && w / Math.max(h, 1e-6) < 5.5) boxes.push(b);
+    }
+  }
+  if (!boxes.length) return [];
+  const sc = 2, v2 = pg.getViewport({ scale: sc }), cv = document.createElement('canvas');
+  cv.width = Math.ceil(v2.width); cv.height = Math.ceil(v2.height);
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+  await pg.render({ canvasContext: ctx, viewport: v2 }).promise;
+  return boxes.map(b => {
+    const x0 = Math.trunc(b[0] * sc), y0 = Math.trunc(b[1] * sc), x1 = Math.trunc(b[2] * sc), y1 = Math.trunc(b[3] * sc);
+    const id = ctx.getImageData(x0, y0, Math.max(1, x1 - x0), Math.max(1, y1 - y0));
+    return { bbox: b, img: Pict.fromRGBA(id.width, id.height, id.data) };
+  });
+}
+/* 기준 그림(공식 9종 + 실제 MSDS 견본) 특징값 */
+let REFS = null;
+async function loadRefs() {
+  if (REFS) return REFS;
+  const dec = b64s => new Promise((res, rej) => { const im = new Image(); im.onload = () => { const cv = document.createElement('canvas'); cv.width = im.naturalWidth; cv.height = im.naturalHeight; const cx = cv.getContext('2d'); cx.drawImage(im, 0, 0); const d = cx.getImageData(0, 0, cv.width, cv.height); res(Pict.fromRGBA(d.width, d.height, d.data)); }; im.onerror = rej; im.src = 'data:image/png;base64,' + b64s; });
+  const R = {};
+  for (const k of Object.keys(ASSETS.GHS_ASSETS)) R[k] = [Pict.arr(await dec(ASSETS.GHS_ASSETS[k]))];
+  for (const k of Object.keys(ASSETS.GHS_EXTRA || {})) for (const v of ASSETS.GHS_EXTRA[k]) (R[k] = R[k] || []).push(Pict.arr(await dec(v)));
+  return (REFS = R);
 }
 
 /* ---------- 상태 ---------- */
@@ -738,7 +947,8 @@ async function openPdf(bytes, name) {
   try {
     const pages = await readPages(bytes);
     if (pages.reduce((a, p) => a + p.words.length, 0) < 30) throw new Error('글자가 없는 스캔본 PDF입니다. 글자를 읽을 수 있는 MSDS가 필요합니다.');
-    A = C.analyze(pages, D, null);
+    const refs = await loadRefs();
+    A = C.analyze(pages, D, imgs => Pict.matchPictograms(imgs, refs));
     fileName = name;
     S = { product: A.info.product, company: A.info.company, address: A.info.address, phone: A.info.phone, signal: A.sec2.signal, ghs: [...A.ghs], ppe: A.ppe, sel: {}, h: [...A.label_default.H], p: {} };
     for (const k of KEYS) S.sel[k] = A.defaults[k].map(t => A.cands[k].indexOf(t)).filter(i => i >= 0);
@@ -767,7 +977,9 @@ function render() {
     <label class="f">신호어<input data-k="signal" value="${esc(S.signal)}"></label>
   </div></section>`;
   html += `<section class="card"><h2>2. GHS 그림문자</h2><p class="hint">원본 MSDS 2항의 그림문자와 같은지 확인하고, 눌러서 넣고 빼세요.</p>
-    ${A.ghs_estimated ? '<div class="warn">⚠ 그림문자 그림을 아직 자동으로 판별하지 않고, 유해·위험문구(H코드)로 추정했습니다. 반드시 원본 MSDS와 대조해 수정하세요.</div>' : ''}
+    ${A.ghs_estimated ? '<div class="warn">⚠ 원본 PDF에서 그림문자 이미지를 찾지 못해 H코드로 추정한 값입니다. 반드시 원본 MSDS와 대조해 수정하세요.</div>' : (A.ghs.length ? '<div class="info">원본 MSDS 2항에 인쇄된 그림을 자동으로 판별했습니다. 원본과 같은지 한 번 더 확인하세요.</div>' : '')}
+    ${A.ghs_unknown ? `<div class="warn">판별하지 못한 그림 ${A.ghs_unknown}개가 있습니다. 아래 목록을 원본과 대조해 직접 확인하세요.</div>` : ''}
+    ${A.ghs_warn.map(w => `<div class="warn">⚠ ${esc(w)}</div>`).join('')}
     ${!H.length && ['', '없음', '해당없음'].includes(S.signal) ? '<div class="info">이 MSDS는 유해·위험문구와 신호어가 없는 제품(비유해성)으로 읽혔습니다. 경고표지 대상인지 원본을 확인하세요.</div>' : ''}
     <div class="tiles">${Object.keys(AS.GHS).sort().map(g => `<button type="button" class="tile ${S.ghs.includes(g) ? 'on' : ''}" data-ghs="${g}" aria-pressed="${S.ghs.includes(g)}"><img alt="" src="data:image/png;base64,${AS.GHS[g]}">${g}</button>`).join('')}</div></section>`;
   html += `<section class="card"><h2>3. 적절한 보호구 <span style="font-weight:400;font-size:13px;color:#6b7a75">MSDS 8항</span></h2><p class="hint">자동 판정 근거: ${esc(A.ppe_reason)}</p>
@@ -787,15 +999,25 @@ function render() {
     const chosenLocal = S.p[g].map(i => gi.indexOf(i)).filter(i => i >= 0);
     html += `<fieldset><legend>${gname} (P)<small>최대 ${C.LABEL_LIMITS[g]}개 · ${chosenLocal.length}개 선택</small></legend>${optList('p_' + g, gi.map(i => P[i].text), chosenLocal, C.LABEL_LIMITS[g])}</fieldset>`;
   }
-  html += `</section><section class="card"><h2>6. 만들기</h2>
+  const miss = LANGS.length ? C.findMissing(D, data(), LANGS) : [];
+  html += `</section><section class="card"><h2>6. 번역 점검</h2>`;
+  if (!LANGS.length) html += '<p class="hint" style="margin:0">외국어를 선택하지 않아 한국어만 출력합니다. 맨 위에서 외국어를 고르면 언어마다 별도 페이지가 만들어집니다.</p>';
+  else if (!miss.length) html += '<div class="ok">선택한 모든 문장이 검수된 사전에 있습니다.</div>';
+  else {
+    html += `<div class="warn">사전에 없는 문장 ${miss.length}건 — 추측 번역을 하지 않고 비워 둡니다. 아래에 검수된 번역을 입력하면 이 브라우저의 사용자 사전에 저장되어 다음부터 자동 적용됩니다.</div>`;
+    html += miss.map(([, text, lang], n) => `<label class="miss"><span style="font-size:13.5px">[${C.LANG_NAMES[lang]}] ${esc(text)}</span><input data-miss="${n}" data-text="${esc(text)}" data-l="${lang}"></label>`).join('');
+    html += `<div class="row" style="margin-top:8px"><button class="btn" id="saveTr">입력한 번역을 사용자 사전에 저장</button><label class="opt" style="padding:0"><input type="checkbox" id="partial" ${allowPartial ? 'checked' : ''}><span>번역이 없는 문장은 한국어만 출력하고 진행</span></label></div>`;
+  }
+  html += `</section><section class="card"><h2>7. 만들기</h2>
     ${!site.value.trim() ? '<div class="warn">맨 위에 사업장명을 입력해 주세요.</div>' : ''}
+    ${miss.length && !allowPartial ? '<div class="warn">번역이 비어 있는 문장이 있습니다. 6번에서 번역을 입력하거나 "한국어만 출력하고 진행"을 선택하세요.</div>' : ''}
     <div class="row"><button class="btn pri" id="mkGuide">관리요령 미리보기</button><button class="btn pri" id="mkLabel">경고표지 미리보기</button></div>
     <div class="prev" id="prevBox" style="margin-top:16px"><div class="row" style="margin-bottom:10px"><button class="btn" id="printBtn">인쇄 / PDF 저장</button><span class="note">인쇄 창에서 대상을 "PDF로 저장"으로 고르면 파일로 저장됩니다.</span></div><iframe class="frame" id="frame" title="미리보기"></iframe></div>
-    <p class="note" style="margin-top:10px">게시 전 원본 MSDS 2·4·5·6·7·8항과 대조하세요.</p></section>`;
+    <p class="note" style="margin-top:10px">※ 외국어 번역은 보조용입니다. 게시 전 원본 MSDS 2·4·5·6·7·8항과 대조하세요.</p></section>`;
   $('work').innerHTML = html;
-  updateButtons();
+  const ok = !!site.value.trim() && !(miss.length && !allowPartial);
+  ['mkGuide', 'mkLabel'].forEach(id => { const b = $(id); if (b) b.disabled = !ok; });
 }
-function updateButtons() { const ok = !!site.value.trim(); ['mkGuide', 'mkLabel'].forEach(id => { const b = $(id); if (b) b.disabled = !ok; }); }
 
 function data() {
   const H = A.sec2.H, P = A.sec2.P, pi = [];
@@ -805,7 +1027,10 @@ function data() {
   return d;
 }
 function preview(kind) {
-  const html = C.makeHtml(kind, data(), D, ['ko'], AS);
+  let html = C.makeHtml(kind, data(), D, LANGS.length ? C.FOREIGN.filter(k => LANGS.includes(k)) : ['ko'], AS);
+  const fonts = { zh: 'Noto+Sans+SC:wght@400;700', km: 'Noto+Sans+Khmer:wght@400;700', si: 'Noto+Sans+Sinhala:wght@400;700' };
+  const fam = LANGS.filter(k => fonts[k]).map(k => 'family=' + fonts[k]);
+  if (fam.length) html = html.replace('<style>', `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${fam.join('&')}&display=swap"><style>`);
   const f = $('frame'); f.srcdoc = html; $('prevBox').classList.add('on');
   f.dataset.kind = kind;
   setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
@@ -813,7 +1038,9 @@ function preview(kind) {
 
 document.addEventListener('input', e => { const k = e.target.dataset.k; if (k && S) S[k] = e.target.value; });
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-ghs],[data-ppe],#mkGuide,#mkLabel,#printBtn'); if (!t) return;
+  const t = e.target.closest('[data-ghs],[data-ppe],#mkGuide,#mkLabel,#printBtn,#saveTr,#udDown'); if (!t) return;
+  if (t.id === 'saveTr') { let n = 0; document.querySelectorAll('[data-miss]').forEach(i => { if (i.value.trim()) { D.addUser(i.dataset.text, i.dataset.l, i.value.trim()); n++; } }); saveUser(); keepScroll(render); return; }
+  if (t.id === 'udDown') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(D.user, null, 1)], { type: 'application/json' })); a.download = 'user_dictionary.json'; document.body.appendChild(a); a.click(); a.remove(); return; }
   if (t.dataset.ghs) { const g = t.dataset.ghs; S.ghs = S.ghs.includes(g) ? S.ghs.filter(x => x !== g) : [...S.ghs, g].sort(); keepScroll(render); }
   else if (t.dataset.ppe) { S.ppe = t.dataset.ppe; keepScroll(render); }
   else if (t.id === 'mkGuide') preview('guide');
@@ -821,7 +1048,11 @@ document.addEventListener('click', e => {
   else if (t.id === 'printBtn') { const w = $('frame').contentWindow; w.focus(); w.print(); }
 });
 document.addEventListener('change', e => {
-  const t = e.target; if (!t.dataset.g) return;
+  const t = e.target;
+  if (t.dataset.lang) { LANGS = t.checked ? [...LANGS, t.dataset.lang] : LANGS.filter(x => x !== t.dataset.lang); LANGS = C.FOREIGN.filter(k => LANGS.includes(k)); LS('label_langs', LANGS); renderLangs(); if (A) keepScroll(render); return; }
+  if (t.id === 'partial') { allowPartial = t.checked; keepScroll(render); return; }
+  if (t.id === 'udUp') { const f = t.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const nw = JSON.parse(r.result); for (const grp of ['codes', 'sent']) for (const k in (nw[grp] || {})) { D.user[grp] = D.user[grp] || {}; D.user[grp][k] = Object.assign(D.user[grp][k] || {}, nw[grp][k]); if (grp === 'codes') D.codes[k] = Object.assign(D.codes[k] || {}, nw[grp][k]); else D.sent[k] = Object.assign(D.sent[k] || {}, nw[grp][k]); } saveUser(); $('udMsg').textContent = '백업을 불러왔습니다.'; if (A) keepScroll(render); } catch (er) { $('udMsg').textContent = '불러오지 못했습니다: ' + er.message; } }; r.readAsText(f); t.value = ''; return; }
+  if (!t.dataset.g) return;
   const g = t.dataset.g, i = +t.dataset.i;
   if (g === 'h') S.h = t.checked ? [...S.h, i] : S.h.filter(x => x !== i);
   else if (g.startsWith('p_')) {
