@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>산업안전보건기준에 관한 규칙 · 보건 핵심정리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Montserrat:wght@500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f6f5;color:#15201d;font-family:'Noto Sans KR','Malgun Gothic',sans-serif;font-size:15.5px;line-height:1.65;word-break:keep-all}
+a{color:#0d3d33}
+.top{background:#0d3d33;color:#fff}
+.top .in{max-width:1080px;margin:0 auto;padding:22px 24px 26px}
+.top .back{color:#c9a46a;text-decoration:none;font-size:14px;font-weight:500}
+.top h1{margin:10px 0 2px;font-size:28px;font-weight:800;letter-spacing:-.6px;line-height:1.25}
+.top .en{font-family:Montserrat,sans-serif;font-size:13px;letter-spacing:2px;color:#c9a46a}
+.top .ver{margin:10px 0 0;font-size:13.5px;color:#cfe1da}
+.bar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #e3e7e5}
+.bar .in{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;flex-direction:column;gap:10px}
+.search{display:flex;gap:8px}
+.search input{flex:1;min-width:0;font:inherit;font-size:16px;padding:10px 14px;border:1.5px solid #cfd6d3;border-radius:999px}
+.search input:focus{outline:none;border-color:#0d3d33}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.chips a{flex:none;text-decoration:none;font-size:13.5px;padding:5px 12px;border-radius:999px;border:1px solid #cfd6d3;color:#15201d;background:#fff;white-space:nowrap}
+.chips a:hover{border-color:#0d3d33;color:#0d3d33}
+main{max-width:1080px;margin:0 auto;padding:20px 24px 60px;display:flex;flex-direction:column;gap:18px}
+.topic{background:#fff;border:1px solid #e3e7e5;border-radius:12px;overflow:hidden;scroll-margin-top:120px}
+.topic>header{padding:18px 22px 14px;border-bottom:1px solid #edf0ef;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between}
+.topic h2{margin:0;font-size:20px;font-weight:800;color:#0d3d33;letter-spacing:-.3px}
+.topic .range{font-size:13px;color:#6b7a75}
+.topic .key{margin:0;padding:12px 22px;background:#f7f4ec;border-bottom:1px solid #edf0ef;font-size:14.5px}
+.topic .key b{color:#7a5a1e}
+.topic .links{padding:10px 22px;border-bottom:1px solid #edf0ef;display:flex;gap:8px;flex-wrap:wrap}
+.topic .links a{font-size:13.5px;text-decoration:none;border:1px solid #c9a46a;color:#7a5a1e;border-radius:999px;padding:4px 12px;background:#fffaf0}
+.art{padding:14px 22px;border-bottom:1px solid #f0f2f1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;align-items:start}
+.art:last-child{border-bottom:0}
+.art h3{margin:0;font-size:16px;font-weight:700}
+.art h3 .no{display:inline-block;min-width:68px;color:#0d3d33}
+.art ul{margin:4px 0 0;padding-left:18px;grid-column:1}
+.art li{margin:2px 0}
+.art .src{grid-column:2;grid-row:1;font-size:13px;text-decoration:none;border:1px solid #0d3d33;border-radius:999px;padding:4px 11px;white-space:nowrap;color:#0d3d33}
+.art .src:hover{background:#0d3d33;color:#fff}
+.num{font-weight:700;color:#b3261e}
+.new{display:inline-block;font-size:11.5px;font-weight:700;background:#fde2df;color:#a3261a;border-radius:4px;padding:0 6px;margin-left:6px;vertical-align:2px}
+mark{background:#ffe9a8;padding:0 1px}
+.none{display:none;text-align:center;color:#6b7a75;padding:30px}
+.foot{font-size:12.5px;color:#8a9692;margin:0}
+@media(max-width:640px){.top h1{font-size:23px}.art{grid-template-columns:1fr}.art .src{grid-column:1;grid-row:auto;justify-self:start}.art h3 .no{min-width:0;margin-right:6px}}
+</style></head><body>
+<div class="top"><div class="in">
+  <a class="back" href="index.html">← 처음으로</a>
+  <h1>산업안전보건기준에 관한 규칙<br>보건 핵심정리</h1>
+  <div class="en">OSH STANDARDS · HEALTH PART</div>
+  <p class="ver">기준: 고용노동부령 제450호(2025. 9. 1. 개정, 2026. 3. 2. 시행) · 제3편 보건기준 중 건설현장에 자주 쓰는 조문</p>
+</div></div>
+<div class="bar"><div class="in">
+  <div class="search"><input id="q" type="search" placeholder="검색: 예) 방독마스크, 밀폐공간, 33도, 취급일지" aria-label="조문 검색"></div>
+  <nav class="chips" id="chips" aria-label="주제 바로가기"></nav>
+</div></div>
+<main id="list"></main>
+<div class="none" id="none">검색 결과가 없습니다. 다른 단어로 찾아보세요.</div>
+<main style="padding-top:0"><p class="foot">이 페이지는 이해를 돕기 위한 요약입니다. 법적 판단은 반드시 [원문 보기]의 국가법령정보센터 최신 원문으로 확인하세요. 입력한 검색어는 외부로 전송되지 않습니다.</p></main>
+
+<script>
+{
+const LAW = '산업안전보건기준에관한규칙';
+const url = no => 'https://www.law.go.kr/' + encodeURI('법령/' + LAW + (no ? '/' + no : ''));
+/* [조문번호, 제목, [요약...], 신설표시] — 요약은 원문을 쉬운 말로 줄인 것 */
+const T = [
+ { id: 'chem', name: '관리대상 유해물질', range: '제1장 · 제420조~제451조',
+   key: '<b>핵심</b> 관리대상·특별관리물질은 MSDS 관리대장으로 먼저 걸러 내고, 특별관리물질은 <b>취급일지 작성과 고지</b>가 추가로 필요합니다.',
+   links: [['msds.html', 'MSDS 관리대장 열기'], ['warning.html', '경고표지·관리요령 만들기']],
+   arts: [
+    ['제420조', '정의', ['관리대상 유해물질: 별표 12의 유기화합물·금속류·산·알칼리류·가스상태 물질류', '특별관리물질: 발암성·생식세포 변이원성·생식독성 등으로 별표 12에 특별관리물질로 표기된 물질', '임시작업: 월 <span class="num">24시간 미만</span> 작업 / 단시간작업: 1일 <span class="num">1시간 미만</span> 작업 (매일·매월 반복이면 제외)']],
+    ['제439조', '특별관리물질 취급 시 적어야 하는 사항', ['취급일지에 근로자 이름, 물질 명칭, 취급량, 작업내용, 착용 보호구, 사고 시 피해·조치사항을 기록']],
+    ['제440조', '특별관리물질의 고지', ['특별관리물질임을 게시판 등으로 알리고, 발암성·생식세포 변이원성·생식독성 중 어디에 해당하는지 고지']],
+    ['제441조', '사용 전 점검 등', ['국소배기장치를 처음 쓰거나 분해·개조·수리 후 처음 쓸 때 점검', '덕트·배풍기 분진 상태, 접속부 헐거움, 흡기·배기 능력 확인 → 이상 시 즉시 청소·보수']],
+    ['제442조', '명칭 등의 게시', ['보기 쉬운 곳에 ① 명칭 ② 인체 영향 ③ 취급 주의사항 ④ 착용 보호구 ⑤ 응급조치·긴급 방재요령 게시']],
+    ['제448조', '세척시설 등', ['세면·목욕·세탁·건조 시설과 용품 비치', '오염된 작업복과 평상복을 따로 보관할 수 있게']],
+    ['제449조', '유해성 등의 주지', ['배치 전에 명칭·특성, 인체 영향·증상, 취급 주의사항, 보호구 착용법, 응급조치 등을 근로자에게 알림']],
+    ['제450조', '호흡용 보호구의 지급 등', ['유기화합물 탱크 내부 세척·페인트칠 등: <span class="num">송기마스크</span>', '밀폐·국소배기 없는 장소의 유기화합물 취급 등: 송기마스크 또는 <span class="num">방독마스크</span>', '금속류·산·알칼리·가스상태 물질: 적절한 호흡용 보호구 (감염 우려 시 개인 전용)']],
+    ['제451조', '보호복 등의 비치 등', ['피부 자극성·부식성 물질: 불침투성 보호복·장갑·장화, 피부보호 약품', '흩날리는 작업: 보안경 / 눈·피부 접촉 우려 시 즉시 씻을 수 있는 세척시설']],
+   ] },
+ { id: 'asb', name: '석면 해체·제거', range: '제2장 · 제486조~제497조의3',
+   key: '<b>핵심</b> 철거 전 <b>석면조사</b> → 해체·제거 계획 → 표지·출입금지 → <b>특등급 방진마스크 등</b> → 습식·음압 → 잔재물 밀봉 처리 순서입니다.',
+   arts: [
+    ['제488조', '일반석면조사', ['건축물·설비 철거·해체 전 맨눈, 설계도서, 자재 이력 등으로 석면 사용 여부 조사', '불명확하면 성분 분석']],
+    ['제489조', '석면해체·제거작업 계획 수립', ['작업 절차·방법, 흩날림 방지·폐기 방법, 근로자 보호조치를 담은 계획 수립 후 근로자에게 알림', '석면조사 결과를 작업장에 게시']],
+    ['제490조', '경고표지의 설치', ['작업 장소 출입구(실외는 보기 쉬운 곳)에 석면 표지 게시']],
+    ['제491조', '개인보호구의 지급·착용', ['<span class="num">특등급</span> 방진마스크, 송기마스크, 전동식 호흡보호구 중 하나', '눈 노출 우려 시 고글형 보안경, 보호복·장갑·신발 지급·착용']],
+    ['제492조~제493조', '출입 금지 · 흡연 등 금지', ['계획을 알고 보호구를 착용한 사람 외 출입 금지', '작업장 안 흡연·음식물 섭취 금지 및 게시']],
+    ['제494조', '위생설비의 설치 등', ['평상복 탈의실 → 샤워실 → 작업복 탈의실 설치', '보호구는 밀폐 용기에 보관, 밖으로 나갈 때 고성능 필터 진공청소기 등으로 분진 제거']],
+    ['제495조', '석면해체·제거작업 시의 조치', ['분무 석면·보온재·내화피복재: 비닐로 밀폐하고 <span class="num">음압 유지</span>(결과 기록·보존), 습식 작업', '벽체·바닥타일·천장재: 차단재로 밀폐, 습식 / 깨거나 자르면 음압 유지', '지붕재: 땅에 떨어뜨리거나 던지지 않기, 습식, 근처 통풍구 밀폐·환기설비 정지']],
+    ['제496조~제497조', '잔재물 처리 · 청소', ['잔재물은 밀봉 포대에 담아 표지 부착 후 폐기물관리법에 따라 처리', '습식 청소 또는 고성능 필터 진공청소기 사용, <span class="num">압축공기 분사 금지</span>']],
+    ['제497조의2', '적용 예외', ['석면 함유율 <span class="num">1% 이하</span> 작업은 제489조~제497조 적용 제외']],
+   ] },
+ { id: 'noise', name: '소음', range: '제4장 · 제512조~제517조',
+   key: '<b>핵심</b> 8시간 <b>85dB 이상</b>이면 소음작업 → 청력보호구 지급, 유해성 주지. 작업환경측정에서 노출기준 초과나 난청이 생기면 <b>청력보존 프로그램</b>입니다.',
+   links: [['aftercare.html', '건강진단 사후관리 열기']],
+   arts: [
+    ['제512조', '정의', ['소음작업: 1일 8시간 기준 <span class="num">85dB 이상</span>', '강렬한 소음작업: 90dB 8시간 · 95dB 4시간 · 100dB 2시간 · 105dB 1시간 · 110dB 30분 · 115dB 15분 이상', '충격소음작업: 120dB 초과 1일 1만 회 · 130dB 초과 1천 회 · 140dB 초과 1백 회 이상']],
+    ['제513조', '소음 감소 조치', ['강렬한 소음·충격소음 작업장: 기계 대체, 밀폐·흡음·격리 등 소음 줄이기 (현저히 곤란하면 예외)']],
+    ['제514조', '소음수준의 주지 등', ['작업장 소음 수준, 인체 영향, 보호구 선정·착용법 등을 근로자에게 알림']],
+    ['제515조', '난청발생에 따른 조치', ['소음성 난청 발생 시 원인 조사 → 재발 방지 대책 → 이행 확인 → 의사 소견에 따른 작업전환 등']],
+    ['제516조', '청력보호구의 지급 등', ['소음·강렬한 소음·충격소음 작업 근로자에게 청력보호구 지급·착용, <span class="num">개인 전용</span>']],
+    ['제517조', '청력보존 프로그램 시행 등', ['소음 작업환경측정 결과 노출기준을 넘는 사업장 또는 소음성 난청 등 건강장해가 생긴 사업장은 청력보존 프로그램 수립·시행', '프로그램: 노출 평가, 공학적 대책, 보호구, 교육, 정기 청력검사, 기록·관리']],
+   ] },
+ { id: 'vib', name: '진동', range: '제4장 · 제512조, 제518조~제521조',
+   arts: [
+    ['제512조', '진동작업의 정의', ['착암기, 동력 해머, 체인톱, 엔진 커터, 동력 연삭기, 임팩트 렌치 등을 쓰는 작업']],
+    ['제518조', '진동보호구의 지급 등', ['진동작업 근로자에게 방진장갑 등 진동보호구 지급·착용']],
+    ['제519조', '유해성 등의 주지', ['인체 영향·증상, 보호구 선정·착용법, 진동기계 관리·사용법, 장해 예방법을 알림']],
+    ['제521조', '진동기계·기구의 관리', ['진동기계·기구를 상시 점검·보수해 정상 상태로 유지']],
+   ] },
+ { id: 'heat', name: '폭염·고열', range: '제6장 · 제558조~제572조',
+   key: '<b>핵심</b> 체감온도 <b>31℃ 이상</b>이면 폭염작업 → 냉방·작업시간 조정·휴식 중 조치. <b>33℃ 이상</b>이면 <b>2시간마다 20분 이상 휴식</b>이 의무입니다.',
+   arts: [
+    ['제558조', '정의', ['폭염작업: 별표 13의2에 따라 측정한 체감온도 <span class="num">31℃ 이상</span> 장소에서의 장시간 작업']],
+    ['제560조', '온도·습도 조절 등', ['폭염작업 시 ① 냉방·통풍장치 가동 ② 작업시간대 조정 ③ 휴식 부여 중 하나 이상 / ①②를 해도 폭염작업이면 ③ 휴식 필수', '체감온도 <span class="num">33℃ 이상</span>: <span class="num">2시간 이내마다 20분 이상</span> 휴식. 휴식이 매우 곤란하면 개인용 냉방·통풍장치 또는 보냉장구 지급', '냉방장치를 외부보다 지나치게 낮게 가동하지 않기']],
+    ['제562조', '고열·폭염장해 예방 조치', ['폭염작업 예상 장소에 <span class="num">온·습도계</span> 상시 비치', '증상·예방·응급조치 요령을 작업 전에 알림', '측정한 체감온도와 조치사항을 날짜별로 기록, <span class="num">그해 12월 31일까지</span> 보관', '열사병 등이 생기거나 의심되면 지체 없이 <span class="num">119</span> 신고']],
+    ['제567조', '휴게시설의 설치', ['폭염에 직접 노출되는 옥외 작업장에는 <span class="num">그늘진 휴식 장소</span> 제공']],
+    ['제571조', '소금과 음료수 등의 비치', ['땀을 많이 흘리는 장소에 소금과 깨끗한 음료수를 충분히 비치']],
+    ['제572조', '보호구의 지급 등', ['고열 물체·매우 더운 장소: 방열장갑·방열복 지급 (개인 전용)']],
+   ] },
+ { id: 'cold', name: '한랭', range: '제6장 · 제563조, 제567조, 제572조',
+   arts: [
+    ['제563조', '한랭장해 예방 조치', ['혈액순환 운동 지도, 영양 지도, 체온 유지를 위한 <span class="num">더운물</span> 준비', '젖은 작업복은 즉시 갈아입게 하기']],
+    ['제567조', '휴게시설의 설치', ['한랭 작업자가 쉴 수 있는 휴게시설을 작업장과 격리해 설치']],
+    ['제572조', '보호구의 지급 등', ['저온 물체·현저히 추운 장소: 방한모·방한화·방한장갑·방한복 지급 (개인 전용)']],
+   ] },
+ { id: 'dust', name: '분진', range: '제9장 · 제605조~제617조',
+   key: '<b>핵심</b> 분진작업자에게 <b>개인 전용 호흡용 보호구</b> 지급, 유해성 주지. 측정 결과 노출기준 초과나 건강장해가 생기면 <b>호흡기보호 프로그램</b>입니다.',
+   links: [['aftercare.html', '건강진단 사후관리 열기']],
+   arts: [
+    ['제605조', '정의', ['분진: 작업장에서 발생하거나 흩날리는 미세한 분말 (황사·미세먼지 PM-10, PM-2.5 포함)', '분진작업: 별표 16의 작업']],
+    ['제607조', '국소배기장치의 설치', ['별표 16 제5호~제25호 분진작업을 하는 실내작업장(갱내 포함)에 밀폐설비 또는 국소배기장치']],
+    ['제613조', '청소의 실시', ['분진작업 실내작업장은 <span class="num">매일 작업 전</span> 청소', '바닥·벽·설비와 휴게 공간은 <span class="num">월 1회 이상</span> 진공청소기나 물로 청소']],
+    ['제614조', '분진의 유해성 등의 주지', ['유해성·노출경로, 발산 방지·환기 방법, 작업장·개인위생, 호흡용 보호구 사용법, 관련 질병 예방법을 알림']],
+    ['제615조', '세척시설 등', ['목욕시설 등 필요한 세척시설 설치']],
+    ['제616조', '호흡기보호 프로그램 시행 등', ['분진 작업환경측정 결과 <span class="num">노출기준 초과</span> 사업장 또는 분진으로 건강장해가 생긴 사업장은 수립·시행']],
+    ['제617조', '호흡용 보호구의 지급 등', ['분진작업 근로자에게 적절한 호흡용 보호구를 <span class="num">개인 전용</span>으로 지급하고 보관함 등 오염 방지', '밀폐설비·국소배기·습식 설비를 가동하면 예외']],
+   ] },
+ { id: 'confined', name: '밀폐공간', range: '제10장 · 제618조~제644조',
+   key: '<b>핵심</b> 작업 전 <b>산소·유해가스 측정</b>(결과 3년 보존) → 환기 → 감시인 배치·인원 점검 → 공기호흡기·송기마스크 비치. <b>긴급 구조훈련은 6개월마다</b>입니다.',
+   arts: [
+    ['제618조', '정의', ['적정공기: 산소 <span class="num">18% 이상 23.5% 미만</span>, 이산화탄소 <span class="num">1.5% 미만</span>, 일산화탄소 <span class="num">30ppm 미만</span>, 황화수소 <span class="num">10ppm 미만</span>', '산소결핍: 산소농도 18% 미만']],
+    ['제619조', '밀폐공간 작업 프로그램의 수립·시행', ['위치 파악, 유해·위험요인 관리, 사전 확인 절차, 교육·훈련 등을 담은 프로그램 시행', '작업 정보·측정 결과·보호구·비상연락체계 등 확인 사항을 작업이 끝날 때까지 출입구에 게시']],
+    ['제619조의2', '산소 및 유해가스 농도의 측정 및 기록 등', ['작업 시작 전(중단 후 재개 포함) 측정·평가자를 지정하고 측정장비 지급', '적정공기가 아니면 환기하거나 공기호흡기·송기마스크 지급', '측정·평가 결과 <span class="num">3년간 보존</span>'], '2025.12.1 신설'],
+    ['제620조', '환기 등', ['작업 전·작업 중 적정공기가 유지되도록 환기 (곤란하면 보호구로 갈음)']],
+    ['제621조~제622조', '인원 점검 · 출입 금지', ['들어갈 때와 나올 때마다 인원 점검', '관계자 외 출입 금지, 출입금지 표지 게시']],
+    ['제623조', '감시인의 배치 등', ['작업 중 밀폐공간 밖에 감시인 배치, 작업자와 연락설비 상시 확보', '이상 시 지체 없이 소방관서 신고, 사업주·관리감독자에게 알림']],
+    ['제624조~제625조', '안전대 · 대피용 기구', ['추락 우려 시 안전대·구명밧줄·공기호흡기 또는 송기마스크 지급', '공기호흡기 또는 송기마스크, 사다리, 섬유로프 등 대피·구출 기구 비치']],
+    ['제639조', '사고 시의 대피 등', ['질식·화재·폭발 우려 시 즉시 작업 중단·대피, 적정공기 확인 전까지 출입 금지']],
+    ['제640조', '긴급 구조훈련', ['<span class="num">6개월에 1회 이상</span> 훈련, 결과 기록·보존']],
+    ['제641조', '안전한 작업방법 등의 주지', ['작업 전 위험성, 측정, 환기, 보호구, 비상연락처, 대피기구 등을 작업자·감시인에게 알리고 숙지 확인']],
+    ['제643조', '구출 시 공기호흡기 또는 송기마스크의 사용', ['구출 작업자에게 공기호흡기 또는 송기마스크 지급·착용']],
+   ] },
+ { id: 'msd', name: '근골격계 부담작업', range: '제12장 · 제656조~제666조',
+   key: '<b>핵심</b> 유해요인 조사 <b>3년마다</b>(신설 사업장은 1년 이내). <b>5kg 이상</b> 중량물은 무게·무게중심을 표시합니다.',
+   arts: [
+    ['제656조', '정의', ['근골격계부담작업: 고용노동부장관이 고시한 작업']],
+    ['제657조', '유해요인 조사', ['근골격계부담작업이 있으면 <span class="num">3년마다</span> 조사 (신설 사업장은 신설일부터 <span class="num">1년 이내</span>)', '질환 발생·새 설비 도입·작업 변경 시 <span class="num">1개월 이내</span>에 검토·조사', '근로자대표 또는 해당 근로자 참여']],
+    ['제659조~제660조', '작업환경 개선 · 통지 및 사후조치', ['질환 우려 시 인력작업 보조설비 등 개선', '근로자가 증상을 알리면 의학적 조치, 필요 시 작업환경 개선']],
+    ['제661조', '유해성 등의 주지', ['유해요인, 징후, 대처요령, 올바른 작업자세와 조사 결과를 알림']],
+    ['제662조', '근골격계질환 예방관리 프로그램 시행', ['업무상 근골격계질환 인정자가 연간 <span class="num">10명 이상</span>이거나, <span class="num">5명 이상이면서 근로자의 10% 이상</span>인 사업장 (또는 장관 명령 시)']],
+    ['제665조', '중량의 표시 등', ['<span class="num">5kg 이상</span> 중량물을 들어 올리는 작업: 물품 중량과 무게중심을 작업장 주변에 표시, 손잡이·보조도구 사용']],
+    ['제666조', '작업자세 등', ['무게중심 낮추기, 몸에 밀착하기 등 부담을 줄이는 자세를 알림']],
+   ] },
+ { id: 'etc', name: '그 밖의 유해인자', range: '제13장 · 제667조~제669조',
+   arts: [
+    ['제667조', '컴퓨터 단말기 조작업무에 대한 조치', ['눈부심·반사 줄이기, 책상·의자 높이 조절, 연속 작업자에게 적절한 휴식']],
+    ['제669조', '직무스트레스에 의한 건강장해 예방 조치', ['장시간 근로·교대작업·차량 운전 등 스트레스가 높은 작업: 요인 평가, 근로시간 단축·순환작업·휴식 배분, 건강증진 프로그램']],
+   ] },
+];
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const plain = h => h.replace(/<[^>]+>/g, '');
+const firstNo = no => no.split('~')[0];
+function hl(html, q) { if (!q) return html; return html.replace(/(>|^)([^<]+)(?=<|$)/g, (m, a, t) => a + t.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), x => `<mark>${x}</mark>`)); }
+function render(q) {
+  q = (q || '').trim();
+  const ql = q.toLowerCase().replace(/\s+/g, '');
+  let shown = 0;
+  const html = T.map(t => {
+    const arts = t.arts.filter(a => !ql || (t.name + a[0] + a[1] + a[2].map(plain).join('')).toLowerCase().replace(/\s+/g, '').includes(ql));
+    if (!arts.length) return '';
+    shown += arts.length;
+    return `<section class="topic" id="${t.id}"><header><h2>${esc(t.name)}</h2><span class="range">${esc(t.range)}</span></header>
+      ${t.key && !ql ? `<p class="key">${t.key}</p>` : ''}
+      ${t.links && !ql ? `<div class="links">${t.links.map(([h, l]) => `<a href="${h}">${l} →</a>`).join('')}</div>` : ''}
+      ${arts.map(a => `<div class="art"><h3><span class="no">${a[0]}</span> ${hl(esc(a[1]), q)}${a[3] ? `<span class="new">${a[3]}</span>` : ''}</h3>
+        <ul>${a[2].map(li => `<li>${hl(li, q)}</li>`).join('')}</ul>
+        <a class="src" href="${url(firstNo(a[0]))}" target="_blank" rel="noopener">원문 보기 ↗</a></div>`).join('')}</section>`;
+  }).join('');
+  document.getElementById('list').innerHTML = html;
+  document.getElementById('none').style.display = shown ? 'none' : 'block';
+}
+document.getElementById('chips').innerHTML = `<a href="${url('')}" target="_blank" rel="noopener">전체 원문 ↗</a>` + T.map(t => `<a href="#${t.id}">${t.name}</a>`).join('');
+const q = document.getElementById('q');
+q.addEventListener('input', () => render(q.value));
+document.getElementById('chips').addEventListener('click', e => { const a = e.target.closest('a[href^="#"]'); if (a && q.value) { q.value = ''; render(''); } });
+render('');
+}
+</script>
+</body></html>
