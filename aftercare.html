@@ -633,9 +633,16 @@ async function prepForOcr(src){const img=await new Promise(r=>{const im=new Imag
   const sc=Math.max(1,2400/img.naturalWidth);const c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*sc);c.height=Math.round(img.naturalHeight*sc);const g=c.getContext('2d');g.drawImage(img,0,0,c.width,c.height);
   const d=g.getImageData(0,0,c.width,c.height),p=d.data,hist=new Array(256).fill(0);for(let i=0;i<p.length;i+=4){const v=(p[i]*0.299+p[i+1]*0.587+p[i+2]*0.114)|0;p[i]=v;hist[v]++}
   let sum=0,tot=p.length/4;for(let i=0;i<256;i++)sum+=i*hist[i];let sB=0,wB=0,best=0,th=160;for(let i=0;i<256;i++){wB+=hist[i];if(!wB)continue;const wF=tot-wB;if(!wF)break;sB+=i*hist[i];const mB=sB/wB,mF=(sum-sB)/wF,v=wB*wF*(mB-mF)*(mB-mF);if(v>best){best=v;th=i}}
-  th=Math.min(200,th+12);for(let i=0;i<p.length;i+=4){const v=p[i]>th?255:0;p[i]=p[i+1]=p[i+2]=v}g.putImageData(d,0,0);return c}
+  th=Math.min(200,th+12);const W0=c.width,H0=c.height,B=new Uint8Array(W0*H0);for(let i=0,j=0;i<p.length;i+=4,j++){B[j]=p[i]<=th?1:0;const v=B[j]?0:255;p[i]=p[i+1]=p[i+2]=v}g.putImageData(d,0,0);
+  // 표 선 지우기 (긴 가로·세로 선 + 주변 3px)
+  const L=60,D=3,M=new Uint8Array(W0*H0);
+  for(let y=0;y<H0;y++){let x=0;while(x<W0){if(B[y*W0+x]){let e=x;while(e<W0&&B[y*W0+e])e++;if(e-x>=L)for(let yy=Math.max(0,y-D);yy<=Math.min(H0-1,y+D);yy++)M.fill(1,yy*W0+x,yy*W0+e);x=e}else x++}}
+  for(let x=0;x<W0;x++){let y=0;while(y<H0){if(B[y*W0+x]){let e=y;while(e<H0&&B[e*W0+x])e++;if(e-y>=L)for(let yy=y;yy<e;yy++)for(let xx=Math.max(0,x-D);xx<=Math.min(W0-1,x+D);xx++)M[yy*W0+xx]=1;y=e}else y++}}
+  const c2=document.createElement('canvas');c2.width=W0;c2.height=H0;const g2=c2.getContext('2d'),d2=g2.createImageData(W0,H0),q=d2.data;
+  for(let j=0,i=0;j<B.length;j++,i+=4){const v=B[j]&&!M[j]?0:255;q[i]=q[i+1]=q[i+2]=v;q[i+3]=255}g2.putImageData(d2,0,0);
+  return [c2,c]}
 async function ocrPages(pages,onp){const T=await loadTesseract();const w=await T.createWorker('kor+eng',1,{logger:m=>{if(m.status==='recognizing text')onp&&onp(`글자 인식 중 ${Math.round(m.progress*100)}%`);else if(/load|init/.test(m.status))onp&&onp('글자 인식 준비 중 (처음 한 번은 1~2분 걸릴 수 있어요)')}});
-  try{await w.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});let txt='';for(let i=0;i<pages.length;i++){onp&&onp(`${i+1}/${pages.length}쪽 글자 인식 중`);const {data}=await w.recognize(await prepForOcr(pages[i]));txt+=data.text+'\n'}return txt}finally{await w.terminate()}}
+  try{await w.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});let a='',b='';for(let i=0;i<pages.length;i++){onp&&onp(`${i+1}/${pages.length}쪽 글자 인식 중`);const [c1,c2]=await prepForOcr(pages[i]);a+=(await w.recognize(c1)).data.text+'\n';onp&&onp(`${i+1}/${pages.length}쪽 한 번 더 확인 중`);b+=(await w.recognize(c2)).data.text+'\n'}return a+'\n@@OCR2@@\n'+b}finally{await w.terminate()}}
 
 /* ---------- 결과지 글자 → 항목 ---------- */
 const HZMAP=[['asbestos',/석면/],['cr6',/크롬/],['weld',/용접|흄|망간/],['iso',/이소시아|MDI|TDI/i],['co',/일산화탄소/],['solvent',/톨루엔|크실렌|자일렌|유기화합물|용제|아세톤|벤젠|헥산|메틸|에틸/],['dust',/분진|광물|규산/],['noise',/소음/],['vib',/진동/],['arc',/아크/],['uv',/자외선|유해광선|광선/],['night',/야간/],['heat',/고열|고온/],['cold',/한랭|저온/],['wood',/목재/],['msd',/중량|근골격/],['cement',/시멘트/]];
@@ -644,7 +651,15 @@ const GORDER=['A','R','U','C1','C2','CN','D1','D2','DN'];
 function normGrade(t){t=String(t||'').trim().toUpperCase().replace(/[|L!I]$/,'1').replace(/^G/,'C').replace(/^0(?=\d)/,'D');if(/^(A|B|R|U|C1|C2|CN|D1|D2|DN)$/.test(t))return t;if(t==='CI'||t==='C|')return 'C1';return ''}
 const worstG=gs=>gs.filter(Boolean).sort((a,b)=>GORDER.indexOf(b)-GORDER.indexOf(a))[0]||'';
 const fixDate=s=>{const m=String(s).replace(/\s/g,'').match(/(\d{4})[.\-/년](\d{1,2})[.\-/월](\d{1,2})/);return m?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:''};
-function parseResult(raw){
+function parseResult(raw){const parts=raw.split('@@OCR2@@');if(parts.length<2)return parse1(raw);
+  const A=parse1(parts[0]),Bv=parse1(parts[1]),out={...A};
+  const okDate=v=>/^20[0-3]\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v);
+  for(const[k,v]of Object.entries(Bv)){if(k==='factors'||k==='hearL'||k==='hearR')continue;if(out[k]==null||(/Date$/.test(k)&&!okDate(out[k])&&okDate(v)))out[k]=v}
+  for(const k of Object.keys(out))if(/Date$/.test(k)&&!okDate(out[k]))delete out[k];
+  ['hearL','hearR'].forEach(k=>{if(!out[k]&&Bv[k])out[k]=Bv[k]});
+  const fa=out.factors||[];for(const f of Bv.factors||[]){const e=fa.find(x=>x.key===f.key);if(!e)fa.push(f);else{if(!e.grade&&f.grade){e.grade=f.grade;e.uncertain=true}if(!e.finding&&f.finding)e.finding=f.finding;if(!e.action&&f.action)e.action=f.action}}
+  if(fa.length)out.factors=fa;if(fa.some(f=>!f.grade))delete out.overall;else out.overall=worstG(fa.map(f=>f.grade));return out}
+function parse1(raw){
   const text=raw.replace(/[ＬＩ]/g,'1').replace(/\r/g,''),flat=text.replace(/[ \t]+/g,' '),out={},sp='\\s*[|:：]?\\s*';
   const g=(re,f=x=>x)=>{const m=flat.match(re);return m?f(m[1].trim()):''};
   out.examType=/배\s*치\s*전/.test(flat)?'배치전':/특\s*수\s*건\s*강/.test(flat)?'특수':/수\s*시\s*건\s*강/.test(flat)?'수시':/일\s*반\s*건\s*강/.test(flat)?'일반':'';
@@ -663,10 +678,12 @@ function parseResult(raw){
   out.bpS=num(/최고혈압\s+(\d{2,3})/);out.bpD=num(/최저혈압\s+(\d{2,3})/);
   out.gripL=num(/악력검사\s*\(좌\)\s+([\d.]+)/);out.gripR=num(/악력검사\s*\(우\)\s+([\d.]+)/);
   out.spiro=num(/폐기능판정\s+(Normal|Restrictive|Obstructive|Mixed|정상|제한성|폐쇄성|혼합성)/i);
-  out.fvc=num(/1-?\s*FVC\s+([\d.]+)/);out.fvcPct=num(/%\s*FVC\s+([\d.]+)/);out.fev1=num(/1-?\s*FEV1\s+([\d.]+)/);out.fev1Pct=num(/FEV1\s*\(%\)\s+([\d.]+)/);out.ratio=num(/FEV1\s*\/\s*FVC\s*\(?%?\)?\s+([\d.]+)/);
+  out.fvc=num(/1-?\s*FVC\s+(\d\.\d+)/);out.fvcPct=num(/%\s*FVC\s+([\d.]+)/);out.fev1=num(/1-?\s*FEV1\s+([\d.]+)/);out.fev1Pct=num(/FEV1\s*\(%\)\s+([\d.]+)/);out.ratio=num(/FEV1\s*\/\s*FVC\s*\(?%?\)?\s+([\d.]+)/);
   out.cxr=/Chest\s*P-?A\s+정상/i.test(flat)?'정상':'';
   const hearL=['','','','','',''],hearR=['','','','','',''],FQ={'0.5':0,'1':1,'2':2,'3':3,'4':4,'6':5};
   for(const m of flat.matchAll(/청력\s*(좌|우)\s*(0\.5|[12346])\s*K\s*H\s*z\s+(\d{1,3})(?!\d)/gi)){(m[1]==='좌'?hearL:hearR)[FQ[m[2]]]=m[3]}
+  if(!hearL.some(Boolean)&&!hearR.some(Boolean)){let n=0,on=false;for(const ln of text.split('\n')){if(/정밀|이경|폐기능|FVC/.test(ln)){if(on)break;continue}const isH=/[청칭정창장]\s*[력릭려]|[0-9]\s*K\s*H|KHz/i.test(ln);if(isH)on=true;if(!on||(!isH&&!/^\W{0,3}1\s*[-=]/.test(ln)))continue;const cells=ln.split(/\s{2,}|\s*[|]\s*/).map(x=>x.trim()).filter(Boolean);const v=(cells[1]||'').replace(/^[\[(|!lI]/,'');if(!/^\d{1,3}$/.test(v)){n++;continue}
+      const ear=/좌/.test(cells[0])?'L':/우/.test(cells[0])?'R':(n<6?'L':'R');const arr=ear==='L'?hearL:hearR;const idx=arr.findIndex(x=>x==='');if(idx>=0)arr[idx]=v;n++}}
   if(hearL.some(Boolean))out.hearL=hearL;if(hearR.some(Boolean))out.hearR=hearR;
   out.nextDate=g(/다음\s*추[적직]\s*검사일\s*(\d{4}\s*[.\-]\s*\d{1,2}\s*[.\-]\s*\d{1,2})/,fixDate);
   // 판정표: "유해인자:소견   사후관리조치   유해인자   등급"
@@ -682,13 +699,14 @@ function parseResult(raw){
       last={label:lab.replace(/^\s*\((?:배|특|일)\)\s*/,'').trim(),finding:rest.join(':').trim(),action,grade,rawGrade:grade?'':lastCell};facs.push(last)}
     else if(last&&cells[0]&&!/[:：]/.test(cells[0])&&!normGrade(cells[0])&&cells[0].length<30){const c0=cells[0];last.cont=(last.cont?last.cont+' ':'')+c0}}
   const ACT=/\s((?:필요없음|추적검사|보호구|근무\s*중|작업\s*전환|건강\s*상담|직업병|정밀\s*검사|금연|체중|약물|근로\s*시간|치료)[\s\S]*)$/;
-  for(const f of facs){if(!f.action){const m=f.finding.match(ACT);if(m){f.action=m[1].trim();f.finding=f.finding.slice(0,m.index).trim()}}
+  const cl=x=>String(x||'').replace(/^[^가-힣A-Za-z0-9(]+/,'').trim();
+  for(const f of facs){f.label=cl(f.label.replace(/^[^(]*\)\s*(?=[가-힣])/,''));f.finding=cl(f.finding).replace(/\s+\S*\]$/,'');f.action=cl(f.action);if(!f.action){const m=f.finding.match(ACT);if(m){f.action=m[1].trim();f.finding=f.finding.slice(0,m.index).trim()}}
     {const m=f.action.match(/\s([가나다라])$/);if(m){f.action=f.action.slice(0,m.index).trim();if(!out.fitness)out.fitness=m[1]}}
     if(f.cont){const c=f.cont;f.finding=/[가-힣]$/.test(f.finding)&&/^[가-힣]{1,3}(\(|$)/.test(c)?f.finding+c:(f.finding+' '+c).trim();delete f.cont}}
   // 좌·우 합치기, 키 매핑
   const byKey={};for(const f of facs){const k=hzKey(f.label);if(!k)continue;const lab=f.label.replace(/\s*\((좌|우)\)\s*$/,'');
     const o=byKey[k]||(byKey[k]={key:k,label:lab.replace(/\[|\]/g,m=>m==='['?'(':')').replace(/그밖의/,'그 밖의 '),grade:'',finding:'',action:'',uncertain:false});
-    o.grade=worstG([o.grade,f.grade]);if(!f.grade)o.uncertain=true;const fd=f.finding.replace(/\s+/g,' ');if(fd&&!o.finding.includes(fd))o.finding=o.finding?o.finding+' / '+fd:fd;if(f.action&&!o.action.includes(f.action))o.action=o.action?o.action+' / '+f.action:f.action}
+    o.grade=worstG([o.grade,f.grade]);if(!f.grade)o.uncertain=true;const fd=f.finding.replace(/\s+/g,' ').replace(/\s+\S*\]$/,'');if(fd&&!o.finding.includes(fd))o.finding=o.finding?o.finding+' / '+fd:fd;if(f.action&&!o.action.includes(f.action))o.action=o.action?o.action+' / '+f.action:f.action}
   // 유해인자 목록만 있는 경우(판정표를 못 읽음)
   const hl=g(/유해인자\s*[:：]\s*([^\n]+)/);if(hl)hl.split(/[,.，]/).forEach(s=>{const k=hzKey(s);if(k&&!byKey[k])byKey[k]={key:k,label:s.trim(),grade:'',finding:'',action:'',uncertain:true}});
   out.factors=Object.values(byKey).map(f=>{if(/^정상$/.test(f.finding)&&!f.grade)f.grade='A';if(!f.action&&f.grade==='A')f.action='필요없음';return f});
