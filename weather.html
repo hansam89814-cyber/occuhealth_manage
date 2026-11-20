@@ -103,6 +103,12 @@ label.f input,label.f select,label.f textarea{font-weight:400;font-size:15px;pad
     </div>
   </div>
   <div class="card">
+    <h2>카톡 공유용 오늘의 현장 기상 <small>복사해서 단톡방에 붙여넣기</small></h2>
+    <div class="row" style="margin-bottom:8px"><span class="seg" id="segShare"><button data-k="0" class="on" type="button">오늘</button><button data-k="1" type="button">내일</button></span><span class="muted">작업시간 07~18시 예보 기준 · 문구는 고쳐 쓸 수 있어요</span></div>
+    <textarea id="shareTxt" rows="9" style="width:100%;font:inherit;font-size:14.5px;line-height:1.6;padding:10px 12px;border:1.5px solid #cfd6d3;border-radius:8px;resize:vertical"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn" id="shareCopy" type="button">복사하기</button><button class="btn gold" id="shareSend" type="button" hidden>카톡 등으로 보내기</button><span class="muted" id="shareMsg"></span></div>
+  </div>
+  <div class="card">
     <h2 id="fcTitle">체감온도 예보 <small>어제 ~ 모레, 1시간 단위</small></h2>
     <div class="chartwrap"><svg class="chart" id="chFeel" viewBox="0 0 720 270"></svg><div class="tip"></div></div>
     <div class="legend" id="lgFeel"></div>
@@ -247,7 +253,10 @@ const HEAT=[{min:35,name:'위험',c:'#b3261e'},{min:33,name:'경고',c:'#d9622b'
 const COLD=[{max:-45,name:'위험',c:'#3b2a7a'},{max:-25,name:'경고',c:'#24427a'},{max:-10,name:'주의',c:'#2c5e9e'},{max:99,name:'관심',c:'#4a7fb5'}];
 const heatStage=v=>HEAT.find(s=>v>=s.min);
 const coldStage=v=>v<-45?COLD[0]:v<-25?COLD[1]:v<-10?COLD[2]:COLD[3];
-const PMG={pm10:[30,80,150],pm25:[15,35,75]};
+const PMG={pm10:[30,80,150],pm25:[15,35,75],o3:[0.030,0.090,0.150]};
+const UVG=[{max:2,n:'낮음',c:'#2f8f5b'},{max:5,n:'보통',c:'#b8961b'},{max:7,n:'높음',c:'#d9822b'},{max:10,n:'매우높음',c:'#b3261e'},{max:999,n:'위험',c:'#6a2a8a'}];
+const uvGrade=v=>v==null?null:UVG.find(g=>Math.round(v)<=g.max);
+const f3=v=>v==null||isNaN(v)?'-':v.toFixed(3);
 const PMN=[{n:'좋음',c:'#2f6fbf'},{n:'보통',c:'#2f8f5b'},{n:'나쁨',c:'#d98a1b'},{n:'매우나쁨',c:'#b3261e'}];
 const pmGrade=(k,v)=>v==null?null:PMN[v<=PMG[k][0]?0:v<=PMG[k][1]?1:v<=PMG[k][2]?2:3];
 const badge=(t,c)=>`<span class="badge" style="background:${c}">${esc(t)}</span>`;
@@ -260,7 +269,7 @@ function merge(rows,obj,map){ if(!obj||!obj.hourly)return; const h=obj.hourly;
   h.time.forEach((t,i)=>{const o=rows.get(t)||{t};for(const[k,src]of Object.entries(map)){const v=h[src]?.[i];if(v!=null)o[k]=v}rows.set(t,o)}); }
 function finish(rows){ return [...rows.values()].sort((a,b)=>a.t<b.t?-1:1).map(o=>{
   const ds=o.t.slice(0,10), m=modeFor(ds);
-  o.hf=heatFeel(o.T,o.RH); o.cf=coldFeel(o.T,o.W); o.feel=m==='summer'?o.hf:o.cf; o.mode=m; return o;}); }
+  o.o3=o.O3==null?null:o.O3/1963; o.hf=heatFeel(o.T,o.RH); o.cf=coldFeel(o.T,o.W); o.feel=m==='summer'?o.hf:o.cf; o.mode=m; return o;}); }
 async function fetchRange(start,end,forecastDays){
   const base={latitude:site.lat,longitude:site.lon,timezone:'Asia/Seoul'};
   const rows=new Map(), t0=today(), recentLimit=addDays(t0,-91);
@@ -270,14 +279,14 @@ async function fetchRange(start,end,forecastDays){
   if(end>=recentLimit||forecastDays){
     const past=Math.max(0,dayDiff(rs,t0));
     const fd=forecastDays||1;
-    jobs.push(getJSON('https://api.open-meteo.com/v1/forecast?'+qs({...base,hourly:WX_VARS,past_days:past,forecast_days:fd})).then(j=>merge(rows,j,{T:'temperature_2m',RH:'relative_humidity_2m',W:'wind_speed_10m'})));
-    jobs.push(getJSON('https://air-quality-api.open-meteo.com/v1/air-quality?'+qs({...base,hourly:'pm10,pm2_5',past_days:past,forecast_days:Math.min(fd,7)})).then(j=>merge(rows,j,{pm10:'pm10',pm25:'pm2_5'})).catch(e=>notes.push('미세먼지 자료를 받지 못했어요.')));
+    jobs.push(getJSON('https://api.open-meteo.com/v1/forecast?'+qs({...base,hourly:WX_VARS+',uv_index',past_days:past,forecast_days:fd})).then(j=>merge(rows,j,{T:'temperature_2m',RH:'relative_humidity_2m',W:'wind_speed_10m',UV:'uv_index'})));
+    jobs.push(getJSON('https://air-quality-api.open-meteo.com/v1/air-quality?'+qs({...base,hourly:'pm10,pm2_5,ozone',past_days:past,forecast_days:Math.min(fd,7)})).then(j=>merge(rows,j,{pm10:'pm10',pm25:'pm2_5',O3:'ozone'})).catch(e=>notes.push('미세먼지 자료를 받지 못했어요.')));
   }
   // 오래된 기간(재분석)
   if(start<recentLimit){
     const oe=end<recentLimit?end:addDays(recentLimit,-1);
     jobs.push(getJSON('https://archive-api.open-meteo.com/v1/archive?'+qs({...base,hourly:WX_VARS,start_date:start,end_date:oe})).then(j=>merge(rows,j,{T:'temperature_2m',RH:'relative_humidity_2m',W:'wind_speed_10m'})));
-    jobs.push(getJSON('https://air-quality-api.open-meteo.com/v1/air-quality?'+qs({...base,hourly:'pm10,pm2_5',start_date:start,end_date:oe})).then(j=>merge(rows,j,{pm10:'pm10',pm25:'pm2_5'})).catch(e=>notes.push('오래된 기간의 미세먼지 자료가 없어요.')));
+    jobs.push(getJSON('https://air-quality-api.open-meteo.com/v1/air-quality?'+qs({...base,hourly:'pm10,pm2_5,ozone',start_date:start,end_date:oe})).then(j=>merge(rows,j,{pm10:'pm10',pm25:'pm2_5',O3:'ozone'})).catch(e=>notes.push('오래된 기간의 미세먼지 자료가 없어요.')));
   }
   await Promise.all(jobs);
   let out=finish(rows);
@@ -294,7 +303,7 @@ function daily(rows){
   const av=(arr,k)=>{let s=0,n=0;for(const o of arr)if(o[k]!=null){s+=o[k];n++}return n?s/n:null};
   return [...m.values()].map(a=>({d:a.d,mode:modeFor(a.d),Tmax:mx(a.work,'T'),Tmin:mn(a.all,'T'),RHavg:av(a.work,'RH'),
     hfMax:mx(a.work,'hf'),h31:a.work.filter(o=>o.hf>=31).length,h33:a.work.filter(o=>o.hf>=33).length,cfMin:mn(a.all,'cf'),
-    pm10avg:av(a.all,'pm10'),pm10max:mx(a.all,'pm10'),pm25avg:av(a.all,'pm25'),pm25max:mx(a.all,'pm25'),n:a.all.length}));
+    uvMax:mx(a.work,'UV'),o3max:mx(a.all,'o3'),pm10avg:av(a.all,'pm10'),pm10max:mx(a.all,'pm10'),pm25avg:av(a.all,'pm25'),pm25max:mx(a.all,'pm25'),n:a.all.length}));
 }
 
 /* ---------- 차트 ---------- */
@@ -328,7 +337,7 @@ function lineChart(svg,{labels,series,lines=[],yUnit='',tipFmt,xTick,bars,zero})
 let FC=null;
 function stageHtml(mode,feel){ if(feel==null)return '';
   return mode==='summer'?badge(heatStage(feel).name,heatStage(feel).c):badge('한랭 '+coldStage(feel).name,coldStage(feel).c); }
-function actionsFor(mode,feel,pm10,pm25){
+function actionsFor(mode,feel,pm10,pm25,uvMax,o3){
   let h='';
   if(mode==='summer'&&feel!=null){const s=heatStage(feel);
     const items=feel>=35?['체감온도 33℃ 이상: <b>2시간 이내마다 20분 이상 휴식</b> 부여 (제560조)','고용노동부 폭염 가이드: 무더위 시간대(14~17시) 옥외작업 중지 권고(긴급작업 제외), 최신 가이드 확인','온열질환 의심 증상 시 즉시 작업 중지, 119 신고 (제562조)','측정한 체감온도와 조치사항 기록 (제562조)']
@@ -344,6 +353,10 @@ function actionsFor(mode,feel,pm10,pm25){
   const worst=[g10,g25].filter(Boolean).sort((a,b)=>PMN.indexOf(b)-PMN.indexOf(a))[0];
   if(worst&&PMN.indexOf(worst)>=2){
     h+=`<div class="act" style="border-color:${worst.c};background:${worst.c}0f"><h3 style="color:${worst.c}">미세먼지 · ${worst.n}</h3><ul><li>옥외 작업자에게 보건용 마스크(KF80 이상) 지급·착용 지도</li><li>기저질환자·고령자 등 민감군은 작업량·시간 조정 검토</li><li>주의보(PM2.5 75 ㎍/㎥, PM10 150 ㎍/㎥ 2시간 지속)·경보 발령 여부는 에어코리아에서 확인</li></ul></div>`;}
+  const ug=uvGrade(uvMax);
+  if(ug&&uvMax>=5.5){h+=`<div class="act" style="border-color:${ug.c};background:${ug.c}0f"><h3 style="color:${ug.c}">자외선 · 오늘 최고 ${ug.n} (${Math.round(uvMax)})</h3><ul><li>옥외 작업자 긴팔 작업복·챙 있는 모자(안전모 차양)·보안경 착용, 자외선 차단제 사용 안내</li><li>자외선이 강한 10~15시에는 그늘에서 휴식하게 하기</li></ul></div>`}
+  const og=pmGrade('o3',o3);
+  if(og&&PMN.indexOf(og)>=2){h+=`<div class="act" style="border-color:${og.c};background:${og.c}0f"><h3 style="color:${og.c}">오존 · ${og.n} (${f3(o3)} ppm)</h3><ul><li>오존 주의보(0.12 ppm 이상) 발령 여부를 에어코리아에서 확인</li><li>오후 시간대 격렬한 옥외작업 줄이기, 호흡기 질환자 등 민감군 작업 조정</li></ul></div>`}
   return h;
 }
 function renderNow(){
@@ -354,7 +367,8 @@ function renderNow(){
   $$('#segSeason button').forEach(b=>b.classList.toggle('on',b.dataset.s===seasonPref));
   $('#nowTime').textContent=o.t.replace('T',' ')+' 기준';
   const feelSub=mode==='summer'?'기온·습도 반영 (여름 산출식)':(o.T<=10&&o.W>=4.68?'기온·바람 반영 (겨울 산출식)':'바람 약함 · 기온과 같음');
-  const g10=pmGrade('pm10',o.pm10),g25=pmGrade('pm25',o.pm25);
+  const g10=pmGrade('pm10',o.pm10),g25=pmGrade('pm25',o.pm25),gO3=pmGrade('o3',o.o3),uvG=uvGrade(o.UV);
+  const uvMaxToday=rows.filter(r=>r.t.startsWith(o.t.slice(0,10))).reduce((m,r)=>r.UV!=null&&(m==null||r.UV>m)?r.UV:m,null);
   const stc=mode==='summer'?heatStage(o.feel).c:coldStage(o.feel).c;
   $('#nowTiles').innerHTML=
    `<div class="tile main" style="border-color:${stc}"><div class="k">체감온도</div><div class="v" style="color:${stc}">${f1(o.feel)}<small>℃</small> ${stageHtml(mode,o.feel)}</div><div class="s">${feelSub}</div></div>`+
@@ -362,8 +376,11 @@ function renderNow(){
    `<div class="tile"><div class="k">습도</div><div class="v">${f0(o.RH)}<small>%</small></div></div>`+
    `<div class="tile"><div class="k">풍속</div><div class="v">${o.W==null?'-':f1(o.W/3.6)}<small>m/s</small></div></div>`+
    `<div class="tile"><div class="k">미세먼지 PM10</div><div class="v">${f0(o.pm10)}<small>㎍/㎥</small></div><div class="s">${g10?badge(g10.n,g10.c):'자료 없음'}</div></div>`+
-   `<div class="tile"><div class="k">초미세먼지 PM2.5</div><div class="v">${f0(o.pm25)}<small>㎍/㎥</small></div><div class="s">${g25?badge(g25.n,g25.c):'자료 없음'}</div></div>`;
-  $('#nowAct').innerHTML=actionsFor(mode,o.feel,o.pm10,o.pm25);
+   `<div class="tile"><div class="k">초미세먼지 PM2.5</div><div class="v">${f0(o.pm25)}<small>㎍/㎥</small></div><div class="s">${g25?badge(g25.n,g25.c):'자료 없음'}</div></div>`+
+   `<div class="tile"><div class="k">자외선 지수</div><div class="v">${o.UV==null?'-':Math.round(o.UV)}</div><div class="s">${uvG?badge(uvG.n,uvG.c):'자료 없음'} ${uvMaxToday!=null?'오늘 최고 '+Math.round(uvMaxToday):''}</div></div>`+
+   `<div class="tile"><div class="k">오존</div><div class="v">${f3(o.o3)}<small>ppm</small></div><div class="s">${gO3?badge(gO3.n,gO3.c):'자료 없음'}</div></div>`;
+  renderShare();
+  $('#nowAct').innerHTML=actionsFor(mode,o.feel,o.pm10,o.pm25,uvMaxToday,o.o3);
   $('#nowSrc').textContent=(FC.cached?'저장된 자료 표시 중 · ':'')+'받은 시각 '+FC.at.replace('T',' ')+(FC.notes.length?' · '+FC.notes.join(' '):'');
   // 체감 차트
   const labels=rows.map(r=>r.t);
@@ -380,14 +397,44 @@ function renderNow(){
   // 날짜별
   const D=daily(rows);
   $('#fcDaily').innerHTML=dailyTable(D,true);
-  $('#fcHourly').innerHTML='<tr><th>일시</th><th>기온℃</th><th>습도%</th><th>풍속m/s</th><th>체감℃</th><th>단계</th><th>PM10</th><th>PM2.5</th></tr>'+rows.map(r=>`<tr${r===o?' style="background:#fff6e0"':''}><td>${md(r.t.slice(0,10))} ${r.t.slice(11,16)}</td><td>${f1(r.T)}</td><td>${f0(r.RH)}</td><td>${r.W==null?'-':f1(r.W/3.6)}</td><td><b>${f1(r.feel)}</b></td><td>${stageHtml(r.mode,r.feel)}</td><td>${pmCell('pm10',r.pm10)}</td><td>${pmCell('pm25',r.pm25)}</td></tr>`).join('');
+  $('#fcHourly').innerHTML='<tr><th>일시</th><th>기온℃</th><th>습도%</th><th>풍속m/s</th><th>체감℃</th><th>단계</th><th>PM10</th><th>PM2.5</th><th>자외선</th><th>오존ppm</th></tr>'+rows.map(r=>`<tr${r===o?' style="background:#fff6e0"':''}><td>${md(r.t.slice(0,10))} ${r.t.slice(11,16)}</td><td>${f1(r.T)}</td><td>${f0(r.RH)}</td><td>${r.W==null?'-':f1(r.W/3.6)}</td><td><b>${f1(r.feel)}</b></td><td>${stageHtml(r.mode,r.feel)}</td><td>${pmCell('pm10',r.pm10)}</td><td>${pmCell('pm25',r.pm25)}</td><td>${uvCell(r.UV)}</td><td>${o3Cell(r.o3)}</td></tr>`).join('');
 }
+const uvCell=v=>{const g=uvGrade(v);return g?`<span class="dot" style="background:${g.c}"></span>${Math.round(v)}`:'-'};
+const o3Cell=v=>{const g=pmGrade('o3',v);return g?`<span class="dot" style="background:${g.c}"></span>${f3(v)}`:'-'};
 const pmCell=(k,v)=>{const g=pmGrade(k,v);return g?`<span class="dot" style="background:${g.c}"></span>${f0(v)}`:'-'};
 function dailyTable(D,short){
-  const head=`<tr><th>날짜</th><th>최고기온</th><th>최저기온</th><th>최고 체감<br><span style="font-weight:400">(여름식)</span></th><th>체감31℃↑<br>시간</th><th>체감33℃↑<br>시간</th><th>최저 체감<br><span style="font-weight:400">(겨울식)</span></th><th>PM10<br>평균/최고</th><th>PM2.5<br>평균/최고</th></tr>`;
+  const head=`<tr><th>날짜</th><th>최고기온</th><th>최저기온</th><th>최고 체감<br><span style="font-weight:400">(여름식)</span></th><th>체감31℃↑<br>시간</th><th>체감33℃↑<br>시간</th><th>최저 체감<br><span style="font-weight:400">(겨울식)</span></th><th>PM10<br>평균/최고</th><th>PM2.5<br>평균/최고</th><th>자외선<br>최고</th><th>오존 최고<br>(ppm)</th></tr>`;
   return head+D.map(a=>{const hs=a.hfMax!=null?heatStage(a.hfMax):null,cs=a.cfMin!=null?coldStage(a.cfMin):null;
-    return `<tr><td>${md(a.d)}</td><td>${f1(a.Tmax)}</td><td>${f1(a.Tmin)}</td><td>${a.hfMax==null?'-':`<b style="color:${hs.c}">${f1(a.hfMax)}</b>`}</td><td>${a.h31?`<b style="color:#c98a1b">${a.h31}</b>`:'0'}</td><td>${a.h33?`<b style="color:#d9622b">${a.h33}</b>`:'0'}</td><td>${a.cfMin==null?'-':`<b style="color:${cs.c}">${f1(a.cfMin)}</b>`}</td><td>${pmCell('pm10',a.pm10avg)} / ${f0(a.pm10max)}</td><td>${pmCell('pm25',a.pm25avg)} / ${f0(a.pm25max)}</td></tr>`}).join('');
+    return `<tr><td>${md(a.d)}</td><td>${f1(a.Tmax)}</td><td>${f1(a.Tmin)}</td><td>${a.hfMax==null?'-':`<b style="color:${hs.c}">${f1(a.hfMax)}</b>`}</td><td>${a.h31?`<b style="color:#c98a1b">${a.h31}</b>`:'0'}</td><td>${a.h33?`<b style="color:#d9622b">${a.h33}</b>`:'0'}</td><td>${a.cfMin==null?'-':`<b style="color:${cs.c}">${f1(a.cfMin)}</b>`}</td><td>${pmCell('pm10',a.pm10avg)} / ${f0(a.pm10max)}</td><td>${pmCell('pm25',a.pm25avg)} / ${f0(a.pm25max)}</td><td>${uvCell(a.uvMax)}</td><td>${o3Cell(a.o3max)}</td></tr>`}).join('');
 }
+let shareK=0;
+function hrRange(arr){if(!arr.length)return '';const hs=arr.map(o=>+o.t.slice(11,13));return `${hs[0]}~${hs[hs.length-1]+1}시`}
+function shareText(day){
+  const rows=FC.rows.filter(o=>o.t.startsWith(day)),work=rows.filter(o=>{const h=+o.t.slice(11,13);return h>=7&&h<=18});
+  if(!work.length)return '해당 날짜의 예보 자료가 없어요.';
+  const pick=(k,max)=>work.reduce((m,o)=>o[k]==null?m:(m==null||(max?o[k]>m[k]:o[k]<m[k]))?o:m,null);
+  const hh=o=>+o.t.slice(11,13)+'시';
+  const mode=modeFor(day), L=[`[${site.name}] ${md(day)} 현장 기상 안내`,'(작업시간 07~18시 예보 기준)',''];
+  if(mode==='summer'){const m=pick('hf',true);
+    if(m){const s=heatStage(m.hf);L.push(`🌡 최고 체감온도 ${f1(m.hf)}℃ (${hh(m)}경) · ${s.name}`);
+      const h33=work.filter(o=>o.hf>=33),h31=work.filter(o=>o.hf>=31);
+      if(h33.length)L.push(`▶ 체감 33℃ 이상 예상 ${hrRange(h33)}: 2시간마다 20분 이상 휴식`);
+      else if(h31.length)L.push(`▶ 체감 31℃ 이상 예상 ${hrRange(h31)}: 냉방·통풍, 작업시간 조정, 휴식 실시`);
+      else L.push('▶ 폭염작업 기준(체감 31℃) 아래 예상, 물·그늘·휴식은 평소대로');}
+    const u=pick('UV',true);if(u){const g=uvGrade(u.UV);L.push(`☀ 자외선 최고 ${g.n}(${Math.round(u.UV)}, ${hh(u)}경)`+(u.UV>=5.5?' → 긴팔·모자·보안경, 자외선 차단제':''));}
+  }else{const m=pick('cf',false);
+    if(m){const s=coldStage(m.cf);L.push(`🥶 최저 체감온도 ${f1(m.cf)}℃ (${hh(m)}경) · 한랭 ${s.name}`);
+      L.push(m.cf<-10?'▶ 동상·저체온 주의: 노출시간 줄이고 휴게시설에서 자주 몸 녹이기':'▶ 방한복·방한장갑 착용, 따뜻한 물·보온 휴게시설 이용');}
+  }
+  const p10=pick('pm10',true),p25=pick('pm25',true);
+  if(p10||p25){const g10=p10&&pmGrade('pm10',p10.pm10),g25=p25&&pmGrade('pm25',p25.pm25);
+    L.push(`😷 미세먼지 최고 ${g10?g10.n+'('+f0(p10.pm10)+')':'-'} · 초미세먼지 최고 ${g25?g25.n+'('+f0(p25.pm25)+')':'-'}`);
+    if((g10&&PMN.indexOf(g10)>=2)||(g25&&PMN.indexOf(g25)>=2))L.push('▶ 옥외작업 시 KF80 이상 마스크 착용, 민감군 작업 조정');}
+  const oz=pick('o3',true);if(oz){const g=pmGrade('o3',oz.o3);if(mode==='summer'||PMN.indexOf(g)>=2)L.push(`오존 최고 ${g.n}(${f3(oz.o3)}ppm, ${hh(oz)}경)`+(PMN.indexOf(g)>=2?' → 오후 격렬한 작업 줄이기':''));}
+  L.push('','※ 예보값이라 실제와 다를 수 있어요. 몸이 이상하면 바로 작업 멈추고 알려주세요.');
+  return L.join('\n');
+}
+function renderShare(){if(!FC)return;$$('#segShare button').forEach(b=>b.classList.toggle('on',+b.dataset.k===shareK));$('#shareTxt').value=shareText(addDays(today(),shareK));$('#shareMsg').textContent=''}
 function showErr(m){const e=$('#err');if(!m){e.style.display='none';return}e.innerHTML=m;e.style.display='block'}
 async function loadNow(){
   showErr('');$('#reload').disabled=true;
@@ -395,7 +442,7 @@ async function loadNow(){
   try{
     const r=await fetchRange(addDays(today(),-1),today(),3);
     FC={rows:r.rows,notes:r.notes,at:kstNow(),cached:false};
-    LS.set('wx_cache',{key,at:FC.at,notes:r.notes,rows:r.rows.map(o=>({t:o.t,T:o.T,RH:o.RH,W:o.W,pm10:o.pm10,pm25:o.pm25}))});
+    LS.set('wx_cache',{key,at:FC.at,notes:r.notes,rows:r.rows.map(o=>({t:o.t,T:o.T,RH:o.RH,W:o.W,UV:o.UV,pm10:o.pm10,pm25:o.pm25,O3:o.O3}))});
   }catch(e){
     const c=LS.get('wx_cache',null);
     if(c&&c.key===key){FC={rows:finish(new Map(c.rows.map(o=>[o.t,o]))),notes:c.notes||[],at:c.at,cached:true};showErr('인터넷 연결이 없거나 날씨 서비스에 접속하지 못해 마지막으로 받은 자료를 보여드려요. ('+esc(e.message)+')')}
@@ -458,10 +505,10 @@ async function makeXlsx(sheets,filename){
 const nn=v=>v==null||isNaN(v)?'':r1(v);
 const gname=(k,v)=>pmGrade(k,v)?.n||'';
 $('#hXlsx').onclick=()=>{ if(!HI)return; const D=daily(HI.rows);
-  const s1={name:'일별 요약',widths:[13,10,10,10,12,11,11,11,11,9,11,11,9,8],rows:[['날짜','최고기온(℃)\n07~18시','최저기온(℃)','평균습도(%)\n07~18시','최고 체감온도(℃)\n여름식·07~18시','체감31℃↑\n시간','체감33℃↑\n시간','최저 체감온도(℃)\n겨울식','PM10 평균\n(㎍/㎥)','PM10\n등급','PM10 최고','PM2.5 평균\n(㎍/㎥)','PM2.5\n등급','PM2.5 최고'],
-    ...D.map(a=>[a.d,nn(a.Tmax),nn(a.Tmin),a.RHavg==null?'':Math.round(a.RHavg),nn(a.hfMax),a.h31,a.h33,nn(a.cfMin),a.pm10avg==null?'':Math.round(a.pm10avg),gname('pm10',a.pm10avg),a.pm10max==null?'':Math.round(a.pm10max),a.pm25avg==null?'':Math.round(a.pm25avg),gname('pm25',a.pm25avg),a.pm25max==null?'':Math.round(a.pm25max)])]};
-  const s2={name:'시간별',widths:[17,9,9,10,12,12,9,9],rows:[['일시','기온(℃)','습도(%)','풍속(m/s)','체감온도(℃)\n여름식','체감온도(℃)\n겨울식','PM10','PM2.5'],...HI.rows.map(o=>[o.t.replace('T',' '),nn(o.T),o.RH==null?'':Math.round(o.RH),o.W==null?'':r1(o.W/3.6),nn(o.hf),nn(o.cf),o.pm10==null?'':Math.round(o.pm10),o.pm25==null?'':Math.round(o.pm25)])]};
-  const s3={name:'안내',widths:[90],rows:[['안내'],[`현장: ${site.name} (위도 ${site.lat}, 경도 ${site.lon})`],[`기간: ${HI.start} ~ ${HI.end}`],['자료: Open-Meteo 기상 모델 예측·재분석 값(CC BY 4.0). 현장 실측값이 아니므로 법정 기록(제562조)은 현장 온·습도계 측정값으로 작성하세요.'],['체감온도: 기상청 산출식. 여름식 = 기온·습도(습구온도 Stull 추정식), 겨울식 = 기온 10℃ 이하·풍속 1.3m/s 이상일 때 기온·풍속, 그 외는 기온과 같음.'],['미세먼지 등급(환경부): PM10 좋음 0~30, 보통 31~80, 나쁨 81~150, 매우나쁨 151~ / PM2.5 좋음 0~15, 보통 16~35, 나쁨 36~75, 매우나쁨 76~'],[`내려받은 시각: ${kstNow().replace('T',' ')}`]]};
+  const s1={name:'일별 요약',widths:[13,10,10,10,12,11,11,11,11,9,11,11,9,8,9,10,8],rows:[['날짜','최고기온(℃)\n07~18시','최저기온(℃)','평균습도(%)\n07~18시','최고 체감온도(℃)\n여름식·07~18시','체감31℃↑\n시간','체감33℃↑\n시간','최저 체감온도(℃)\n겨울식','PM10 평균\n(㎍/㎥)','PM10\n등급','PM10 최고','PM2.5 평균\n(㎍/㎥)','PM2.5\n등급','PM2.5 최고','자외선\n최고','오존 최고\n(ppm)','오존\n등급'],
+    ...D.map(a=>[a.d,nn(a.Tmax),nn(a.Tmin),a.RHavg==null?'':Math.round(a.RHavg),nn(a.hfMax),a.h31,a.h33,nn(a.cfMin),a.pm10avg==null?'':Math.round(a.pm10avg),gname('pm10',a.pm10avg),a.pm10max==null?'':Math.round(a.pm10max),a.pm25avg==null?'':Math.round(a.pm25avg),gname('pm25',a.pm25avg),a.pm25max==null?'':Math.round(a.pm25max),a.uvMax==null?'':Math.round(a.uvMax),a.o3max==null?'':+a.o3max.toFixed(3),gname('o3',a.o3max)])]};
+  const s2={name:'시간별',widths:[17,9,9,10,12,12,9,9,9,10],rows:[['일시','기온(℃)','습도(%)','풍속(m/s)','체감온도(℃)\n여름식','체감온도(℃)\n겨울식','PM10','PM2.5','자외선','오존(ppm)'],...HI.rows.map(o=>[o.t.replace('T',' '),nn(o.T),o.RH==null?'':Math.round(o.RH),o.W==null?'':r1(o.W/3.6),nn(o.hf),nn(o.cf),o.pm10==null?'':Math.round(o.pm10),o.pm25==null?'':Math.round(o.pm25),o.UV==null?'':Math.round(o.UV),o.o3==null?'':+o.o3.toFixed(3)])]};
+  const s3={name:'안내',widths:[90],rows:[['안내'],[`현장: ${site.name} (위도 ${site.lat}, 경도 ${site.lon})`],[`기간: ${HI.start} ~ ${HI.end}`],['자료: Open-Meteo 기상 모델 예측·재분석 값(CC BY 4.0). 현장 실측값이 아니므로 법정 기록(제562조)은 현장 온·습도계 측정값으로 작성하세요.'],['체감온도: 기상청 산출식. 여름식 = 기온·습도(습구온도 Stull 추정식), 겨울식 = 기온 10℃ 이하·풍속 1.3m/s 이상일 때 기온·풍속, 그 외는 기온과 같음.'],['자외선 지수(기상청): 낮음 0~2, 보통 3~5, 높음 6~7, 매우높음 8~10, 위험 11~ / 오존 등급(환경부, 1시간): 좋음 0~0.030, 보통 0.031~0.090, 나쁨 0.091~0.150, 매우나쁨 0.151 ppm~ (㎍/㎥ ÷ 1963으로 환산). 92일보다 오래된 기간은 자외선 자료가 없습니다.'],['미세먼지 등급(환경부): PM10 좋음 0~30, 보통 31~80, 나쁨 81~150, 매우나쁨 151~ / PM2.5 좋음 0~15, 보통 16~35, 나쁨 36~75, 매우나쁨 76~'],[`내려받은 시각: ${kstNow().replace('T',' ')}`]]};
   makeXlsx([s1,s2,s3],`현장기상_${HI.start}_${HI.end}.xlsx`);
 };
 
@@ -543,6 +590,10 @@ $$('#segSeason button').forEach(b=>b.onclick=()=>{seasonPref=b.dataset.s;LS.set(
 $('#reload').onclick=loadNow;
 $('#hEnd').max=today();$('#hStart').max=today();
 
+$$('#segShare button').forEach(b=>b.onclick=()=>{shareK=+b.dataset.k;renderShare()});
+$('#shareCopy').onclick=async()=>{const t=$('#shareTxt').value;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){const ta=$('#shareTxt');ta.focus();ta.select();try{ok=document.execCommand('copy')}catch(e2){}}
+  $('#shareMsg').textContent=ok?'복사했어요. 카톡 대화방에 붙여넣기 하세요.':'복사가 안 되면 글자를 길게 눌러 직접 복사해 주세요.'};
+if(navigator.share){$('#shareSend').hidden=false;$('#shareSend').onclick=()=>navigator.share({text:$('#shareTxt').value}).catch(()=>{})}
 let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(FC)renderNow();if(HI)renderHist()},200)});
 showSite();resetForm();renderLog();loadNow();
 window.__wx={heatFeel,coldFeel};
