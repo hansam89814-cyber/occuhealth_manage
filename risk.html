@@ -84,7 +84,7 @@ details>summary{cursor:pointer;font-weight:700;color:#0d3d33}
   <div class="card">
     <h2>기본 정보</h2>
     <div class="grid">
-      <label class="f">현장명<input id="mSite" placeholder="예) 삼천동 현장"></label>
+      <label class="f">현장명<input id="mSite" placeholder="예) 전주 오성대우 주택재건축 정비사업"></label>
       <label class="f">평가 구분<select id="mKind"><option>정기</option><option>수시</option><option>최초</option></select></label>
       <label class="f">평가일<input id="mDate" type="date"></label>
     </div>
@@ -241,7 +241,8 @@ const numbered=a=>a.map((m,i)=>`${i+1}. ${m}`).join('\n');
 const LV=['상','중','하'];
 
 /* ---------- 상태 ---------- */
-let DOC=LS.get('risk_doc',null)||{meta:{site:'',kind:'정기',date:KST()},def:{loc:'',boss:'',chk:'',per:''},rows:[]};
+let DOC=LS.get('risk_doc',null)||{meta:{site:'전주 오성대우 주택재건축 정비사업',kind:'정기',date:KST()},def:{loc:'',boss:'',chk:'',per:''},rows:[]};
+if(!DOC.meta.site)DOC.meta.site='전주 오성대우 주택재건축 정비사업';
 const save=()=>LS.set('risk_doc',DOC);
 const FIELDS=[['mSite','meta','site'],['mKind','meta','kind'],['mDate','meta','date'],['dLoc','def','loc'],['dBoss','def','boss'],['dChk','def','chk'],['dPer','def','per']];
 FIELDS.forEach(([id,g,k])=>{const el=$('#'+id);el.value=DOC[g][k]||'';el.addEventListener('input',()=>{DOC[g][k]=el.value;save()})});

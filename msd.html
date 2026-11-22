@@ -1085,7 +1085,7 @@ photos 배열에는 첨부된 이미지 ${slots.length}개 각각에 대해 slot
     const st = state.settings || {};
     return {
       id: 'sv-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), createdAt: new Date().toISOString(),
-      info: { company: st.company || '', site: st.site || '', process: '', unitTask: '', content: '', date: today(), surveyor: st.surveyor || '',
+      info: { company: st.company || '', site: st.site || '전주 오성대우 주택재건축 정비사업', process: '', unitTask: '', content: '', date: today(), surveyor: st.surveyor || '',
         jobs: ['', '', '', '', ''], workers: [{ name: '' }, { name: '' }], workHours: st.workHours || '1일 8시간', restPattern: st.restPattern || '50분 작업 / 10분 휴게', loadInfo: '', memo: '' },
       photos: [{}, {}, {}, {}],
       analysis: { method: 'REBA', methodReason: '', toolNotes: { OWAS: '', RULA: '', REBA: '' }, summary: '', evals: [{}, {}, {}, {}] },

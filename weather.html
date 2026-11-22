@@ -201,7 +201,7 @@ label.f input,label.f select,label.f textarea{font-weight:400;font-size:15px;pad
     <div class="grid" style="grid-template-columns:1fr 1fr"><label class="f">위도<input id="sLat" type="number" step="0.0001"></label><label class="f">경도<input id="sLon" type="number" step="0.0001"></label></div>
   </div>
   <p class="muted" style="margin:8px 0">현장에서 아래 버튼을 누르면 휴대폰 위치로 좌표가 채워져요. 지도 앱에서 좌표를 복사해 넣어도 됩니다.</p>
-  <div class="row" style="justify-content:space-between"><span class="row"><button class="btn ghost sm" id="sGeo" type="button">현재 위치 사용</button><button class="btn ghost sm" id="sDef" type="button">기본값(삼천동)</button></span><span class="row"><button class="btn ghost" id="sCancel" type="button">취소</button><button class="btn" id="sSave" type="button">저장</button></span></div>
+  <div class="row" style="justify-content:space-between"><span class="row"><button class="btn ghost sm" id="sGeo" type="button">현재 위치 사용</button><button class="btn ghost sm" id="sDef" type="button">기본값(현장)</button></span><span class="row"><button class="btn ghost" id="sCancel" type="button">취소</button><button class="btn" id="sSave" type="button">저장</button></span></div>
 </div></div>
 
 <script>/*!
@@ -222,8 +222,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 'use strict';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}};
-const DEF_SITE={name:'삼천동 현장',lat:35.7985,lon:127.1175};
+const DEF_SITE={name:'전주 오성대우 주택재건축 정비사업',lat:35.7985,lon:127.1175};
 let site=LS.get('wx_site',DEF_SITE);
+if(site&&site.name==='삼천동 현장'){site.name=DEF_SITE.name;LS.set('wx_site',site)}
 let seasonPref=LS.get('wx_season','auto');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const r1=v=>v==null||isNaN(v)?null:Math.round(v*10)/10;

@@ -744,7 +744,7 @@ async function exportXlsx() {
 const dSite = document.getElementById('dSite'), dVendor = document.getElementById('dVendor'), dWork = document.getElementById('dWork');
 (function init() {
   REG = LS('msds_reg') || []; MYDB = LS('msds_mydb') || {};
-  const d = LS('msds_def') || {}; dSite.value = d.site || ''; dVendor.value = d.vendor || ''; dWork.value = d.work || '';
+  const d = LS('msds_def') || {}; dSite.value = d.site || '전주 오성대우 주택재건축 정비사업'; dVendor.value = d.vendor || ''; dWork.value = d.work || '';
   [dSite, dVendor, dWork].forEach(i => i.onchange = save);
   render();
 })();
