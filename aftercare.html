@@ -822,6 +822,11 @@ function parseGaein(raw){
   if(!out.factors.some(f=>!f.grade)&&(out.factors.length||genG.length))out.overall=worstG([...out.factors.map(f=>f.grade),...genG]);
   Object.keys(out).forEach(k=>{if(out[k]===''||out[k]==null||(Array.isArray(out[k])&&!out[k].length))delete out[k]});
   return out}
+/* 좌·우 귀를 따로 적기: E=[{ear,grade,f,a}] → 소견 "좌(A): 정상 / 우(C1): …", 조치는 다르면 귀별로 */
+function earFmt(E){E=[...E].sort((x,y)=>(x.ear==='좌'?0:1)-(y.ear==='좌'?0:1));const nm=x=>x.replace(/\s+/g,' ').trim();
+  const finding=E.map(e=>`${e.ear}(${e.grade||'?'}): ${nm(e.f||'')}`).join(' / ');const acts=[...new Set(E.map(e=>nm(e.a||'')).filter(Boolean))];
+  const action=acts.length<=1?(acts[0]||''):E.map(e=>`${e.ear}: ${nm(e.a||'')}`).join(' / ');
+  const ab=E.filter(e=>e.grade&&e.grade!=='A'&&!/^정상/.test(e.f||'')).map(e=>`${e.ear}: ${nm(e.f||'')}`).join(', ');return {finding,action,ab}}
 /* 글자(텍스트) PDF 중 칸 이름이 그림으로 되어 있고 굵은 글씨가 두 번 찍힌 양식 (예: "정상정상", "건건 강강 진진 단단") */
 const isDupForm=raw=>/정상정상|(건강진단일자){2}|([가-힣])\2\s+([가-힣])\3\s+([가-힣])\4/.test(raw);
 function undup(raw){return raw.split('\n').map(l=>{
@@ -836,6 +841,7 @@ function parseDupForm(raw){
   // 맨 위 칸: 이름 나이 성별 / 사업체명 업종 / 현작업부서 현작업내용 지청 / 입사일 전입일 노출시간
   const hz=lines.findIndex(l=>/^\(?(배|특|일)?\)?.*(소음|분진|진동|자외선|용접|유기|석면|크롬|흄).*,/.test(l));const top=lines.slice(0,hz>0?hz:40);
   {const re=/(?:^|\s)([가-힣]{2,4})\s+(\d{2})\s+(남|여)$/,i=top.findIndex(l=>re.test(l));if(i>=0){const m=top[i].match(re);out.name=m[1];out.age=m[2];out.sex=m[3]}}
+  if(!out.name||/검진|진단|일자|병원|의사|귀하|사업|근로/.test(out.name)){const m=text.match(/근\s*로\s*자\s+([가-힣]{2,4})\s*$/m);out.name=m?m[1]:''}
   {const i=top.findIndex(l=>/현장|공구|건설|\(주\)|㈜|주식회사/.test(l)&&!/지점명/.test(l));if(i>=0){out.company=cells(top[i])[0];const nx=top.slice(i+1).find(l=>l&&!/^\d/.test(l));if(nx){const c=cells(nx);if(c[0]&&/[가-힣]/.test(c[0]))out.dept=c[0]}}}
   {const l=top.find(l=>/^20\d\d-\d\d-\d\d(\s+20\d\d-\d\d-\d\d)?(\s+\d{1,2})?$/.test(l));if(l){const d=l.match(/20\d\d-\d\d-\d\d/g);out.joinDate=d[0];const h=l.match(/\s(\d{1,2})$/);if(h)out.hours=h[1]}}
   if(!out.nextDate){const m=text.match(/다음\s*검진일은?\s*(20\d\d)\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/);if(m)out.nextDate=`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`}
@@ -858,23 +864,26 @@ function parseDupForm(raw){
     // 같은 유해인자·같은 귀가 다시 나오면(2차 검사) 앞의 R(추가검사) 결과를 대신함
     const fin={};for(const r of rows){const id=r.k+'|'+r.ear;if(!fin[id]||fin[id].grade==='R'||!fin[id].grade)fin[id]=r;else if(r.grade&&GORDER.indexOf(r.grade)>GORDER.indexOf(fin[id].grade))fin[id]=r}
     const byKey={};for(const r of Object.values(fin)){const name=r.lab.replace(/^\s*\((?:배|특|일)\)\s*/,'').replace(/\s*\((좌|우)\)\s*$/,'').replace(/\[/,'(').replace(/\]/,')').replace(/그밖의/,'그 밖의 ').trim();
-      const o=byKey[r.k]||(byKey[r.k]={key:r.k,label:name,grade:'',finding:'',action:'',uncertain:false,_f:[],_a:[]});o.grade=worstG([o.grade,r.grade]);if(!r.grade)o.uncertain=true;
-      const fd=(r.ear&&!/^정상/.test(r.finding)?r.ear+': ':'')+r.finding;if(r.finding&&!o._f.includes(fd))o._f.push(fd);const ac=r.act.join('');if(ac&&!o._a.includes(ac))o._a.push(ac)}
-    const fs=Object.values(byKey).map(f=>{const ab=f._f.filter(x=>!/^정상/.test(x));f.finding=ab.length?ab.join(' / '):(f._f.length?'정상':'');
-      const aa=f._a.filter(x=>!/필요없음|건강양호/.test(x));f.action=aa.length?aa.join(' / '):(f._a[0]||'');delete f._f;delete f._a;if(!f.grade&&/^정상$/.test(f.finding))f.grade='A';return f});
+      const o=byKey[r.k]||(byKey[r.k]={key:r.k,label:name,grade:'',finding:'',action:'',uncertain:false,_e:[]});o.grade=worstG([o.grade,r.grade]);if(!r.grade)o.uncertain=true;
+      o._e.push({ear:r.ear,grade:r.grade,f:r.finding,a:r.act.join('')})}
+    const fs=Object.values(byKey).map(f=>{const E=f._e;delete f._e;
+      if(E.some(e=>e.ear)){const r=earFmt(E.filter(e=>e.ear).concat(E.filter(e=>!e.ear).map(e=>({...e,ear:'양측'}))));f.finding=r.finding;f.action=r.action;f._ab=r.ab}
+      else{const fdl=[...new Set(E.map(e=>e.f).filter(Boolean))],ab=fdl.filter(x=>!/^정상/.test(x));f.finding=ab.length?ab.join(' / '):(fdl.length?'정상':'');
+        const al=[...new Set(E.map(e=>e.a).filter(Boolean))],aa=al.filter(x=>!/필요없음|건강양호/.test(x));f.action=aa.length?aa.join(' / '):(al[0]||'');if(!f.grade&&/^정상$/.test(f.finding))f.grade='A';f._ab=f.grade&&f.grade!=='A'?f.finding:''}
+      return f});
     if(fs.length){out.factors=fs;if(!fs.some(f=>!f.grade))out.overall=worstG(fs.map(f=>f.grade));else delete out.overall;
-      const ab=fs.filter(f=>f.grade&&f.grade!=='A').map(f=>f.finding).filter(Boolean);out.mainFinding=ab.join(', ');if(!out.mainFinding)delete out.mainFinding}
+      const ab=fs.map(f=>f._ab).filter(Boolean);fs.forEach(f=>delete f._ab);out.mainFinding=ab.join(', ');if(!out.mainFinding)delete out.mainFinding}
     if(fit)out.fitness=fit}
   Object.keys(out).forEach(k=>{if(out[k]===''||out[k]==null)delete out[k]});
   return out}
-function parseResult(raw){const parts=raw.split('@@OCR2@@'),P=(()=>{const sc=o=>Object.keys(o).length+(o.factors||[]).length,t=parts[0],C=[parse1];if(isGaein(raw))C.push(parseGaein);if(isDupForm(raw))C.push(parseDupForm);let best=parse1,bs=-1;for(const f of C){try{const v=sc(f(t));if(v>=bs){bs=v;best=f}}catch(e){}}return best})();if(parts.length<2){const o=P(raw);delete o.genGrades;return o}
+function parseResult(raw){const parts=raw.split('@@OCR2@@'),P=(()=>{const sc=o=>Object.keys(o).length+(o.factors||[]).length,t=parts[0],C=[parse1];if(isGaein(raw))C.push(parseGaein);if(isDupForm(raw))C.push(parseDupForm);let best=parse1,bs=-1;for(const f of C){try{const v=sc(f(t));if(v>=bs){bs=v;best=f}}catch(e){}}return best})();if(parts.length<2){const o=P(raw);delete o.genGrades;if(o.name&&/검진|진단|일자|병원|의사|귀하|사업|근로/.test(o.name))delete o.name;return o}
   const A=P(parts[0]),Bv=P(parts[1]),out={...A};
   const okDate=v=>/^20[0-3]\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v);
   for(const[k,v]of Object.entries(Bv)){if(k==='factors'||k==='hearL'||k==='hearR'||k==='genGrades')continue;if(out[k]==null||(/Date$/.test(k)&&!okDate(out[k])&&okDate(v)))out[k]=v}
   for(const k of Object.keys(out))if(/Date$/.test(k)&&!okDate(out[k]))delete out[k];
   ['hearL','hearR'].forEach(k=>{if(Bv[k]){const a=out[k]||['','','','','',''];out[k]=a.map((v,i)=>v||Bv[k][i]||'')}});
   const fa=out.factors||[];for(const f of Bv.factors||[]){const e=fa.find(x=>x.key===f.key);if(!e)fa.push(f);else{if(!e.grade&&f.grade){e.grade=f.grade;e.uncertain=true}if(!e.finding&&f.finding)e.finding=f.finding;if(!e.action&&f.action)e.action=f.action}}
-  const gg=A.genGrades||Bv.genGrades||[];delete out.genGrades;
+  const gg=A.genGrades||Bv.genGrades||[];delete out.genGrades;if(out.name&&/검진|진단|일자|병원|의사|귀하|사업|근로/.test(out.name))delete out.name;
   if(fa.length)out.factors=fa;if(fa.some(f=>!f.grade))delete out.overall;else if(fa.length||gg.length)out.overall=worstG([...fa.map(f=>f.grade),...gg]);return out}
 function parse1(raw){
   const text=raw.replace(/[ＬＩ]/g,'1').replace(/\r/g,''),flat=text.replace(/[ \t]+/g,' '),out={},sp='\\s*[|:：]?\\s*';
@@ -923,7 +932,8 @@ function parse1(raw){
   // 좌·우 합치기, 키 매핑
   const byKey={};for(const f of facs){const k=hzKey(f.label);if(!k)continue;const lab=f.label.replace(/\s*\((좌|우)\)\s*$/,'');
     const o=byKey[k]||(byKey[k]={key:k,label:lab.replace(/\[|\]/g,m=>m==='['?'(':')').replace(/그밖의/,'그 밖의 '),grade:'',finding:'',action:'',uncertain:false});
-    o.grade=worstG([o.grade,f.grade]);if(!f.grade)o.uncertain=true;const fd=f.finding.replace(/\s+/g,' ').replace(/\s+\S*\]$/,'');if(fd&&!o.finding.includes(fd))o.finding=o.finding?o.finding+' / '+fd:fd;if(f.action&&!o.action.includes(f.action))o.action=o.action?o.action+' / '+f.action:f.action}
+    o.grade=worstG([o.grade,f.grade]);if(!f.grade)o.uncertain=true;const fd=f.finding.replace(/\s+/g,' ').replace(/\s+\S*\]$/,'');const ear=(f.label.match(/\((좌|우)\)\s*$/)||[])[1];if(ear)(o._e||(o._e=[])).push({ear,grade:f.grade,f:fd,a:f.action});if(fd&&!o.finding.includes(fd))o.finding=o.finding?o.finding+' / '+fd:fd;if(f.action&&!o.action.includes(f.action))o.action=o.action?o.action+' / '+f.action:f.action}
+  for(const o of Object.values(byKey)){if(o._e){const last={};o._e.forEach(e=>{if(!last[e.ear]||last[e.ear].grade==='R'||!last[e.ear].grade)last[e.ear]=e});const r=earFmt(Object.values(last));o.finding=r.finding;o.action=r.action;o.grade=worstG(Object.values(last).map(e=>e.grade))}delete o._e}
   // 유해인자 목록만 있는 경우(판정표를 못 읽음)
   const hl=g(/유해인자\s*[:：]\s*([^\n]+)/);if(hl)hl.split(/[,.，]/).forEach(s=>{const k=hzKey(s);if(k&&!byKey[k])byKey[k]={key:k,label:s.trim(),grade:'',finding:'',action:'',uncertain:true}});
   out.factors=Object.values(byKey).map(f=>{if(/^정상$/.test(f.finding)&&!f.grade)f.grade='A';if(!f.action&&f.grade==='A')f.action='필요없음';return f});
@@ -941,7 +951,7 @@ function scanSection(){const w=W();return `<h3>⓪ 건강진단 결과지 원본
  <div class="row" style="grid-template-columns:1fr;margin-top:6px"><label class="small-btn" style="display:inline-block;text-align:center">📄 결과지 올리기 (PDF·사진, 여러 장 가능)<input type="file" accept="application/pdf,image/*" multiple hidden onchange="scanUpload(this)"></label></div>
  <div class="scanbtns"><button class="small-btn" id="scanAuto" onclick="scanAuto()" disabled>결과지에서 자동 채우기</button><button class="small-btn" id="scanDel" onclick="scanDelete()" disabled>원본 삭제</button>
  <label style="font-size:12px;display:flex;gap:4px;align-items:center"><input type="checkbox" ${w.printScan?'checked':''} onchange="W().printScan=this.checked;save();renderPages()">인쇄할 때 원본도 뒤에 붙이기</label></div>
- <div class="muted-s" id="scanMsg"></div><div class="muted-s" style="text-align:right;opacity:.6">결과지 자동 인식 v3 (2026-11-23)</div>`}
+ <div class="muted-s" id="scanMsg"></div><div class="muted-s" style="text-align:right;opacity:.6">결과지 자동 인식 v4 (2026-11-23)</div>`}
 async function scanRefresh(){const w=W(),box=document.getElementById('scanbox');if(!box)return;const f=await fGet(w.id);if(W()!==w)return;
   document.getElementById('scanAuto').disabled=!f;document.getElementById('scanDel').disabled=!f;
   box.innerHTML=f?`<div class="thumbs">${f.pages.map((p,i)=>`<img src="${p}" alt="결과지 ${i+1}쪽" onclick="scanView(${i})">`).join('')}</div><div class="muted-s">${esc(f.name||'')} · ${f.pages.length}쪽 · 눌러서 크게 보기</div>`:'<div class="muted-s">아직 올린 결과지가 없어요. 건강진단 결과지(PDF 또는 스캔·사진)를 올리면 이 근로자 기록과 함께 보관되고, 내용을 자동으로 채울 수 있어요.</div>'}
