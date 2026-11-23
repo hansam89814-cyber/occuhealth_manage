@@ -828,7 +828,7 @@ function scanSection(){const w=W();return `<h3>⓪ 건강진단 결과지 원본
  <div class="row" style="grid-template-columns:1fr;margin-top:6px"><label class="small-btn" style="display:inline-block;text-align:center">📄 결과지 올리기 (PDF·사진, 여러 장 가능)<input type="file" accept="application/pdf,image/*" multiple hidden onchange="scanUpload(this)"></label></div>
  <div class="scanbtns"><button class="small-btn" id="scanAuto" onclick="scanAuto()" disabled>결과지에서 자동 채우기</button><button class="small-btn" id="scanDel" onclick="scanDelete()" disabled>원본 삭제</button>
  <label style="font-size:12px;display:flex;gap:4px;align-items:center"><input type="checkbox" ${w.printScan?'checked':''} onchange="W().printScan=this.checked;save();renderPages()">인쇄할 때 원본도 뒤에 붙이기</label></div>
- <div class="muted-s" id="scanMsg"></div>`}
+ <div class="muted-s" id="scanMsg"></div><div class="muted-s" style="text-align:right;opacity:.6">결과지 자동 인식 v2 (2026-11-23)</div>`}
 async function scanRefresh(){const w=W(),box=document.getElementById('scanbox');if(!box)return;const f=await fGet(w.id);if(W()!==w)return;
   document.getElementById('scanAuto').disabled=!f;document.getElementById('scanDel').disabled=!f;
   box.innerHTML=f?`<div class="thumbs">${f.pages.map((p,i)=>`<img src="${p}" alt="결과지 ${i+1}쪽" onclick="scanView(${i})">`).join('')}</div><div class="muted-s">${esc(f.name||'')} · ${f.pages.length}쪽 · 눌러서 크게 보기</div>`:'<div class="muted-s">아직 올린 결과지가 없어요. 건강진단 결과지(PDF 또는 스캔·사진)를 올리면 이 근로자 기록과 함께 보관되고, 내용을 자동으로 채울 수 있어요.</div>'}
@@ -845,7 +845,9 @@ async function scanUpload(inp,auto){const files=[...inp.files];inp.value='';if(!
   catch(e){console.error(e);scanMsg('파일을 읽지 못했어요: '+e.message)}}
 async function scanAuto(){if(SCAN.busy)return;const w=W(),f=await fGet(w.id);if(!f)return;SCAN.busy=true;document.getElementById('scanAuto').disabled=true;
   try{let txt=f.text||'';const hasText=txt.replace(/\s/g,'').length>150;
-    if(!hasText){scanMsg('스캔본이라 글자 인식을 시작해요…');txt=await ocrPages(f.pages,scanMsg);f.ocr=txt;await fPut(w.id,f)}
+    if(!hasText){const w0=await new Promise(r=>{const im=new Image();im.onload=()=>r(im.naturalWidth);im.onerror=()=>r(0);im.src=f.pages[0]});
+      if(w0&&w0<2000&&!confirm('이 결과지는 예전 방식(낮은 화질)으로 보관돼 있어서 글자를 잘 못 읽을 수 있어요.\n\n[취소]를 누르고 "원본 삭제" 후 결과지를 다시 올리면 훨씬 잘 읽혀요.\n그래도 지금 그대로 읽을까요?')){scanMsg('원본 삭제 → 결과지 다시 올리기를 해 주세요.');return}
+      scanMsg('스캔본이라 글자 인식을 시작해요…');txt=await ocrPages(f.pages,scanMsg);f.ocr=txt;await fPut(w.id,f)}
     const r=parseResult(txt);scanMsg('');scanReview(r,hasText)}
   catch(e){console.error(e);scanMsg(e.message+' · 원본을 보면서 직접 입력해 주세요.')}
   finally{SCAN.busy=false;const b=document.getElementById('scanAuto');if(b)b.disabled=false}}
