@@ -1,86 +1,43 @@
 <!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sam's 보건관리</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2716%27 fill=%27%230d3d33%27/%3E%3Ctext x=%2732%27 y=%2746%27 text-anchor=%27middle%27 font-family=%27Arial%27 font-size=%2742%27 font-weight=%27700%27 fill=%27white%27%3ES%3C/text%3E%3C/svg%3E">
+<title>쌤쌤's 보건관리</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Montserrat:wght@500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f4f6f5;color:#15201d;font-family:'Noto Sans KR','Malgun Gothic',sans-serif;word-break:keep-all}
-.wrap{max-width:1320px;margin:0 auto;padding:44px 40px 28px;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
-header{display:flex;justify-content:center;margin-bottom:32px}
+body{margin:0;background:#fff;color:#16262b;font-family:'Noto Sans KR','Malgun Gothic',sans-serif;word-break:keep-all}
+.wrap{max-width:1120px;margin:0 auto;padding:44px 40px 28px;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
+header{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:40px}
 .brand{display:flex;align-items:center;gap:12px}
-.brand h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-.6px;color:#0d3d33;line-height:1.2}
-.brand .en{margin:0;font-family:Montserrat,sans-serif;font-size:11px;letter-spacing:2.5px;color:#c9a46a;line-height:1.6}
-.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
-a.tile{display:flex;flex-direction:column;align-items:center;min-width:0;min-height:250px;padding:28px 10px 22px;background:#fff;border:1px solid #e3e7e5;border-radius:20px;color:#15201d;text-decoration:none;text-align:center;overflow:hidden;transition:border-color .2s,box-shadow .2s,transform .2s}
-a.tile:hover{border-color:#0d3d33;box-shadow:0 8px 24px rgba(13,61,51,.10);transform:translateY(-2px)}
-a.tile:focus-visible{outline:3px solid #c9a46a;outline-offset:3px}
-.ic{flex:none;width:80px;height:80px;border-radius:24px;display:flex;align-items:center;justify-content:center}
-.t{margin-top:18px;min-height:52px;width:100%;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1.35;font-weight:700;letter-spacing:-.5px;overflow-wrap:anywhere}
-.d{margin-top:6px;width:100%;font-size:13px;line-height:1.55;color:#55635f;word-break:keep-all}
-.d .nw{white-space:nowrap}
-.note{margin:28px 0 0;font-size:12.5px;line-height:1.6;color:#8a9692}
-@media(max-width:1000px){.wrap{padding:28px 20px 22px}.grid{gap:12px}a.tile{min-height:0;padding:22px 10px 18px}.ic{width:64px;height:64px;border-radius:20px}.ic svg{width:32px;height:32px}.t{margin-top:14px;font-size:17px;min-height:46px}.d{font-size:12.5px}header{margin-bottom:22px}}
-@media(max-width:640px){.wrap{padding:28px 18px 22px;justify-content:flex-start}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}a.tile{min-height:0;padding:20px 10px 16px}.ic{width:60px;height:60px;border-radius:18px}.ic svg{width:30px;height:30px}.t{margin-top:12px;font-size:16.5px;min-height:46px}.d{font-size:12.5px}header{margin-bottom:22px}.brand h1{font-size:24px}}
+header h1{margin:0;font-size:44px;font-weight:800;letter-spacing:-1.2px;color:#147285;line-height:1.2}
+header .en{margin:10px 0 0;font-family:Montserrat,sans-serif;font-size:14px;letter-spacing:3.5px;color:#147285;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+a.tile{display:flex;flex-direction:column;align-items:center;gap:16px;min-width:0;padding:34px 12px;background:#fff;border:1px solid #dcebef;border-radius:20px;color:#16262b;text-decoration:none;text-align:center;transition:border-color .2s,box-shadow .2s,transform .2s}
+a.tile:hover{border-color:#147285;box-shadow:0 8px 24px rgba(20,114,133,.12);transform:translateY(-2px)}
+a.tile:focus-visible{outline:3px solid #7fcde0;outline-offset:3px}
+.ic{flex:none;width:72px;height:72px;border-radius:22px;background:#e6f5f8;display:flex;align-items:center;justify-content:center}
+.t{font-size:18px;font-weight:700;letter-spacing:-.4px;line-height:1.35;overflow-wrap:anywhere}
+.note{margin:32px 0 0;font-size:12.5px;line-height:1.6;color:#8a9692;text-align:center}
+@media(max-width:1000px){.wrap{padding:28px 20px 22px}.grid{gap:12px}a.tile{padding:24px 8px;gap:12px}.ic{width:60px;height:60px;border-radius:18px}.ic svg{width:32px;height:32px}.t{font-size:16px}header h1{font-size:36px}header{margin-bottom:28px}}
+@media(max-width:640px){.wrap{justify-content:flex-start}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}header h1{font-size:30px}header .en{font-size:11px;letter-spacing:2.5px}.brand svg{width:26px;height:26px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
-
-.brand{gap:14px;max-width:100%}
-.sam-mark{width:52px;height:52px;flex:none;border-radius:14px;background:#0d3d33;color:#fff;display:grid;place-items:center;font-family:Arial,sans-serif;font-size:34px;font-weight:700;line-height:1}
-.brand h1{font-size:32px;letter-spacing:-1.3px;line-height:1.2}
-.brand .en{color:#778780;font-size:10px;letter-spacing:1px;margin-top:4px}
-@media(max-width:640px){.brand{gap:10px}.sam-mark{width:43px;height:43px;border-radius:12px;font-size:28px}.brand h1{font-size:25px}.brand .en{font-size:8px;letter-spacing:.45px}}
 </style></head>
 <body>
 <div class="wrap">
   <header>
-    <div class="brand">
-      <span class="sam-mark" aria-hidden="true">S</span>
-      <div><h1>Sam's 보건관리</h1><p class="en">CONSTRUCTION HEALTH MANAGEMENT</p></div>
-    </div>
+    <div class="brand"><svg aria-hidden="true" width="34" height="34" viewBox="0 0 24 24"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="#7fcde0"/></svg><h1>쌤쌤's 보건관리</h1></div>
+    <p class="en">CONSTRUCTION HEALTH MANAGEMENT</p>
   </header>
   <nav class="grid" aria-label="보건관리 메뉴">
-    <a class="tile" href="aftercare.html">
-      <span class="ic" style="background:#f7efe3"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9a6a2f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8.8a5 5 0 0 0-9-3 5 5 0 0 0-9 3c0 5.6 9 11.4 9 11.4s9-5.8 9-11.4z"/><path d="M6 11.5h3l1.5-2.5 2 5 1.5-2.5h4"/></svg></span>
-      <span class="t">건강진단 사후관리</span>
-      <span class="d">검진 결과로 <span class="nw">상담지·교육자료·</span><br>상담 기록을 출력</span>
-    </a>
-    <a class="tile" href="vuln.html">
-      <span class="ic" style="background:#fbeceb"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a3261a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7.5" r="3.5"/><path d="M2.5 21v-1.2A6 6 0 0 1 8.5 13.8h1a6 6 0 0 1 3.3 1"/><path d="M18 11.5l4 1.6v3.3c0 2.6-1.8 4.4-4 5.1-2.2-.7-4-2.5-4-5.1v-3.3z"/><path d="M16.5 16.8l1.1 1.1 2-2.2"/></svg></span>
-      <span class="t">취약근로자 관리대장</span>
-      <span class="d">취약근로자 분류, <span class="nw">관리대장·건강상담일지</span></span>
-    </a>
-    <a class="tile" href="warning.html">
-      <span class="ic" style="background:#fdeceb"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#b3261e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.2 21.8 12 12 21.8 2.2 12z"/><path d="M12 8v5"/><path d="M12 16.3v.1"/></svg></span>
-      <span class="t">경고표지 · 관리요령</span>
-      <span class="d">MSDS로 <span class="nw">경고표지·관리요령을</span><br>만들어 인쇄</span>
-    </a>
-    <a class="tile" href="msds.html">
-      <span class="ic" style="background:#eef4f2"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0d3d33" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 2.5h7"/><path d="M10 2.5v6.5L4 19.2a1.8 1.8 0 0 0 1.6 2.3h12.8a1.8 1.8 0 0 0 1.6-2.3L14 9V2.5"/><path d="M6.6 15h10.8"/></svg></span>
-      <span class="t">MSDS 관리대장</span>
-      <span class="d">MSDS PDF로 엑셀 관리대장 정리</span>
-    </a>
-    <a class="tile" href="weather.html">
-      <span class="ic" style="background:#fdf1e4"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#b35a1e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5V4.8a2.8 2.8 0 0 1 5.6 0v9.7a5 5 0 1 1-5.6 0z"/><path d="M11.3 9.5v8"/><path d="M17.5 5h4M17.5 9h4M17.5 13h3"/></svg></span>
-      <span class="t">현장 기상 모니터</span>
-      <span class="d"><span class="nw">체감온도·미세먼지</span> 예보와 측정 기록부</span>
-    </a>
-    <a class="tile" href="risk.html">
-      <span class="ic" style="background:#eef2ea"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a6a2f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="18.5" rx="2"/><path d="M8.5 2h7v3.5h-7z"/><path d="m8 12.5 2.5 2.5 5-5"/><path d="M8 18.5h8"/></svg></span>
-      <span class="t">보건 위험성평가</span>
-      <span class="d">공종별 보건 유해요인 <span class="nw">상·중·하</span> 평가</span>
-    </a>
-    <a class="tile" href="msd.html">
-      <span class="ic" style="background:#f1ecf6"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5b3f8a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="4" r="2.2"/><path d="M13 7 10 13.5l3.5 3v5"/><path d="M10 13.5 7 21.5"/><path d="M12 9.5l4.5 1.5"/><rect x="16.5" y="8.5" width="5" height="5" rx="0.8"/><path d="M2.5 21.5h19"/></svg></span>
-      <span class="t">근골격계 유해요인조사</span>
-      <span class="d">작업 사진 및 AI를 활용한<br><span class="nw">OWAS, RULA, REBA</span> <span class="nw">인간공학적 작업부하 평가</span></span>
-    </a>
-    <a class="tile" href="rules.html">
-      <span class="ic" style="background:#eaeef6"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2c4a7a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.2a2 2 0 0 1 2-2h14v16.6H6a2 2 0 0 0-2 2z"/><path d="M4 20.8a2 2 0 0 0 2 1.7h14v-3.7"/><path d="M8.5 7h7.5M8.5 11h7.5"/></svg></span>
-      <span class="t">보건기준 핵심정리</span>
-      <span class="d">건설현장 보건 조문 요약과 원문 연결</span>
-    </a>
+    <a class="tile" href="aftercare.html"><span class="ic"><svg aria-hidden="true" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#147285" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8.8a5 5 0 0 0-9-3 5 5 0 0 0-9 3c0 5.6 9 11.4 9 11.4s9-5.8 9-11.4z"/><path d="M6 11.5h3l1.5-2.5 2 5 1.5-2.5h4"/></svg></span><span class="t">건강진단 사후관리</span></a>
+    <a class="tile" href="vuln.html"><span class="ic"><svg aria-hidden="true" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#147285" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7.5" r="3.5"/><path d="M2.5 21v-1.2A6 6 0 0 1 8.5 13.8h1a6 6 0 0 1 3.3 1"/><path d="M18 11.5l4 1.6v3.3c0 2.6-1.8 4.4-4 5.1-2.2-.7-4-2.5-4-5.1v-3.3z"/><path d="M16.5 16.8l1.1 1.1 2-2.2"/></svg></span><span class="t">취약근로자 관리대장</span></a>
+    <a class="tile" href="warning.html"><span class="ic"><svg aria-hidden="true" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#147285" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.2 21.8 12 12 21.8 2.2 12z"/><path d="M12 8v5"/><path d="M12 16.3v.1"/></svg></span><span class="t">경고표지 · 관리요령</span></a>
+    <a class="tile" href="msds.html"><span class="ic"><svg aria-hidden="true" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#147285" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 2.5h7"/><path d="M10 2.5v6.5L4 19.2a1.8 1.8 0 0 0 1.6 2.3h12.8a1.8 1.8 0 0 0 1.6-2.3L14 9V2.5"/><path d="M6.6 15h10.8"/></svg></span><span class="t">MSDS 관리대장</span></a>
+    <a class="tile" href="weather.html"><span class="ic"><svg aria-hidden="true" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#147285" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5V4.8a2.8 2.8 0 0 1 5.6 0v9.7a5 5 0 1 1-5.6 0z"/><path d="M11.3 9.5v8"/><path d="M17.5 5h4M17.5 9h4M17.5 13h3"/></svg></span><span class="t">현장 기상 모니터</span></a>
+    <a class="tile" href="risk.html"><span class="ic"><svg aria-hidden="true" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#147285" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="18.5" rx="2"/><path d="M8.5 2h7v3.5h-7z"/><path d="m8 12.5 2.5 2.5 5-5"/><path d="M8 18.5h8"/></svg></span><span class="t">보건 위험성평가</span></a>
+    <a class="tile" href="msd.html"><span class="ic"><svg aria-hidden="true" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#147285" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="4" r="2.2"/><path d="M13 7 10 13.5l3.5 3v5"/><path d="M10 13.5 7 21.5"/><path d="M12 9.5l4.5 1.5"/><rect x="16.5" y="8.5" width="5" height="5" rx="0.8"/><path d="M2.5 21.5h19"/></svg></span><span class="t">근골격계 유해요인조사</span></a>
+    <a class="tile" href="rules.html"><span class="ic"><svg aria-hidden="true" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#147285" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.2a2 2 0 0 1 2-2h14v16.6H6a2 2 0 0 0-2 2z"/><path d="M4 20.8a2 2 0 0 0 2 1.7h14v-3.7"/><path d="M8.5 7h7.5M8.5 11h7.5"/></svg></span><span class="t">보건기준 핵심정리</span></a>
   </nav>
   <p class="note">입력한 내용과 올린 파일은 이 기기의 브라우저 안에서만 처리·저장되며 외부로 전송되지 않습니다. 현장 기상 모니터는 날씨 조회를 위해 현장 좌표만 날씨 서비스로 보냅니다. 근골격계 유해요인조사는 사진 분석을 누를 때 사진과 작업 정보를 본인 API 키로 Anthropic(Claude)에 보냅니다.</p>
 </div>
