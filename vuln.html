@@ -141,6 +141,12 @@ table.led{min-width:1020px}
 .jpage+.jpage{break-before:page}
 .reqdoc table.jt td:nth-child(2){white-space:nowrap}.reqdoc .jhd>div:first-child{flex:1;padding-right:12px}
 .reqdoc .apt{width:auto!important;flex:none}.reqdoc .apt td{width:78px!important}
+#form .grid{align-items:end}
+#form label.f .lt{display:block;line-height:1.35}
+#form label.f .lt small{font-size:12px;font-weight:500;color:#6b7a75;margin-left:4px;white-space:nowrap}
+#form label.f input[readonly]{background:#f4f6f5;color:#3b4844}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:#147285;color:#fff;padding:10px 18px;border-radius:999px;font-weight:700;font-size:14.5px;opacity:0;transition:opacity .2s,transform .2s;z-index:950;pointer-events:none}#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media print{#toast{display:none}}
 
 </style><style id="sh-css">
 :root{--sw:248px}
@@ -239,6 +245,7 @@ body>.bar .del,body>.bar button.del{color:#a3261a!important;border-color:#e0b4af
         <button class="btn" id="add" type="button">+ 근로자 추가</button>
         <button class="btn gold" id="imp" type="button">사후관리에서 불러오기</button>
         <button class="btn ghost" id="xlsx" type="button">엑셀 내보내기</button>
+        <label class="btn ghost" id="xlsxInL">엑셀 불러오기<input type="file" id="xlsxIn" accept=".xlsx" hidden></label>
         <button class="btn ghost" id="prt" type="button">대장 인쇄</button>
       </span>
     </div>
@@ -275,7 +282,7 @@ body>.bar .del,body>.bar button.del{color:#a3261a!important;border-color:#e0b4af
       <div class="grid">
         <label class="f">성명<input data-k="name"></label>
         <label class="f">생년월일<input data-k="birth" type="date"></label>
-        <label class="f">나이(만) <span class="muted" style="font-weight:400">생년월일이 없을 때</span><input data-k="age" type="number" min="15" max="99"></label>
+        <label class="f">나이(만)<input data-k="age" type="number" min="15" max="99"></label>
         <label class="f">협력사<input data-k="company"></label>
         <label class="f">공종<input data-k="trade" placeholder="예) 골조, 조경"></label>
         <label class="f">고용 형태<select data-k="emp"><option>상용</option><option>일용</option><option>일용 용역</option></select></label>
@@ -309,10 +316,10 @@ body>.bar .del,body>.bar button.del{color:#a3261a!important;border-color:#e0b4af
     <div class="card">
       <h2>채용 절차</h2>
       <div class="grid">
-        <label class="f">일반건강진단 결과서 <span class="muted" style="font-weight:400">('25·'26년)</span><select data-k="gen"><option value="">선택</option><option>제출</option><option>미제출</option><option>예외(일일 용역·일대장비)</option></select></label>
-        <label class="f">혈관건강도(유비오맥파) <span class="muted" style="font-weight:400">미제출자</span><select data-k="ubio"><option value="">미실시</option><option value="A">A 건강</option><option value="B">B 보통</option><option value="C">C 주의</option><option value="D">D 요주의</option><option value="E">E 진단요망</option><option value="F">F 진단필수</option><option value="G">G 나쁨</option></select></label>
-        <label class="f">배치전건강진단 결과서 <span class="muted" style="font-weight:400">검사일 12개월 내</span><select data-k="pre"><option value="">선택</option><option>제출</option><option>미제출(당일 투입 전 실시)</option></select></label>
-        <label class="f">혈압 이상자 소견서<select data-k="opinion"><option value="">해당 없음/미제출</option><option>제출</option></select></label>
+        <label class="f"><span class="lt">일반건강진단 결과서 <small>'25·'26년</small></span><select data-k="gen"><option value="">선택</option><option>제출</option><option>미제출</option><option>예외(일일 용역·일대장비)</option></select></label>
+        <label class="f"><span class="lt">혈관건강도(유비오맥파) <small>미제출자</small></span><select data-k="ubio"><option value="">미실시</option><option value="A">A 건강</option><option value="B">B 보통</option><option value="C">C 주의</option><option value="D">D 요주의</option><option value="E">E 진단요망</option><option value="F">F 진단필수</option><option value="G">G 나쁨</option></select></label>
+        <label class="f"><span class="lt">배치전건강진단 결과서 <small>12개월 내</small></span><select data-k="pre"><option value="">선택</option><option>제출</option><option>미제출(당일 투입 전 실시)</option></select></label>
+        <label class="f"><span class="lt">혈압 이상자 소견서</span><select data-k="opinion"><option value="">해당 없음/미제출</option><option>제출</option></select></label>
       </div>
       <div id="old68" style="display:none">
         <div class="sub">68세 이상 조건부 채용 <span class="muted">승인 순서대로 체크</span></div>
@@ -349,7 +356,7 @@ body>.bar .del,body>.bar button.del{color:#a3261a!important;border-color:#e0b4af
       <label class="f"><textarea data-k="note" rows="2"></textarea></label>
       <div class="row" style="margin-top:12px;justify-content:space-between">
         <button class="btn del" id="del" type="button">이 근로자 삭제</button>
-        <button class="btn" id="back" type="button">관리대장으로</button>
+        <span class="row"><span class="muted" id="saveMsg"></span><button class="btn ghost" id="back" type="button">취소</button><button class="btn" id="saveW" type="button">저장</button></span>
       </div>
     </div>
   </div>
@@ -422,7 +429,8 @@ let CF=Object.assign({},CF0,LS.get('vw_cfg',{}));
 const saveCf=()=>LS.set('vw_cfg',CF);
 
 /* ---------- 데이터 ---------- */
-let W=LS.get('vw_workers',[]);let cur=null;
+let W=LS.get('vw_workers',[]);let cur=null,isNew=false,dirty=false;
+const clone=o=>JSON.parse(JSON.stringify(o));
 const save=()=>LS.set('vw_workers',W);
 const blank=()=>({id:uid(),name:'',birth:'',age:'',company:'',trade:'',emp:'일용',start:KST(),end:'',bpS:'',bpD:'',bpDate:'',
   dz:{htn:false,dm:false,dl:false,cv:false,other:''},occ:false,occWhat:'',sick:false,gen:'',ubio:'',pre:'',opinion:'',
@@ -505,10 +513,11 @@ function render(){
 /* ---------- 입력 화면 ---------- */
 function getK(o,k){return k.split('.').reduce((a,p)=>a?.[p],o)}
 function setK(o,k,v){const p=k.split('.');let a=o;for(let i=0;i<p.length-1;i++)a=a[p[i]]=a[p[i]]||{};a[p[p.length-1]]=v}
-function openW(id){cur=W.find(w=>w.id===id);if(!cur)return;tab('edit');fill()}
+function openW(id){if(!leaveEdit())return;const w=W.find(w=>w.id===id);if(!w)return;cur=clone(w);isNew=false;dirty=false;tab('edit',true);fill()}
+const stored=()=>cur&&!isNew?W.find(w=>w.id===cur.id):null;
 function fill(){if(!cur){$('#form').style.display='none';$('#noSel').style.display='';return}
   $('#form').style.display='flex';$('#noSel').style.display='none';
-  $$('#form [data-k]').forEach(el=>{const v=getK(cur,el.dataset.k);if(el.type==='checkbox')el.checked=!!v;else el.value=v??''});
+  $$('#form [data-k]').forEach(el=>{const v=getK(cur,el.dataset.k);if(el.type==='checkbox')el.checked=!!v;else el.value=v??''});syncAge();$('#saveMsg').textContent=isNew?'새 근로자 · 저장을 눌러야 대장에 들어가요':'';
   $('#lgDate').value=KST();$('#lgS').value='';$('#lgD').value='';$('#lgG').value='';$('#lgGt').value='';$('#lgMed').value='';$('#lgNote').value='';refresh()}
 function refresh(){const j=judge(cur);
   $('#old68').style.display=j.age!=null&&j.age>=CF.old2?'':'none';
@@ -519,16 +528,23 @@ function refresh(){const j=judge(cur);
   $('#cycle').textContent=j.cyc?`· ${j.cyc}`:'';
   const L=[...cur.logs].sort((a,b)=>a.date<b.date?1:-1);
   $('#logs').innerHTML=L.length?`<table class="logt"><tr><th>상담일</th><th>혈압</th><th>혈당</th><th>복용약</th><th>내용</th><th></th></tr>${L.map(l=>`<tr><td>${l.date}</td><td>${l.s||l.d?(bpHiL(l)?red:x=>x)(`${esc(l.s)}/${esc(l.d)}`):''}</td><td>${(gHi(l)?red:x=>x)(esc(gfmt(l)))}</td><td>${esc(l.med)}</td><td>${esc(l.note)}</td><td><button class="btn del sm" data-ld="${l.id}" type="button">삭제</button></td></tr>`).join('')}</table>`:'<p class="muted" style="margin:0">아직 상담 기록이 없어요.</p>';
-  $$('#logs [data-ld]').forEach(b=>b.onclick=()=>{if(!confirm('이 상담 기록을 지울까요?'))return;cur.logs=cur.logs.filter(l=>l.id!==b.dataset.ld);save();refresh()})}
-$$('#form [data-k]').forEach(el=>{const h=()=>{if(!cur)return;let v=el.type==='checkbox'?el.checked:el.value;setK(cur,el.dataset.k,v);save();refresh()};el.addEventListener(el.type==='checkbox'||el.tagName==='SELECT'?'change':'input',h)});
+  $$('#logs [data-ld]').forEach(b=>b.onclick=()=>{if(!confirm('이 상담 기록을 지울까요?'))return;const id=b.dataset.ld;cur.logs=cur.logs.filter(l=>l.id!==id);const st=stored();if(st){st.logs=st.logs.filter(l=>l.id!==id);save()}refresh()})}
+function syncAge(){const a=$('[data-k=age]');if(cur.birth){const g=ageOf(cur);cur.age=g==null?'':String(g);a.value=cur.age;a.readOnly=true;a.title='생년월일로 자동 계산돼요'}else{a.readOnly=false;a.title=''}}
+$$('#form [data-k]').forEach(el=>{const h=()=>{if(!cur)return;let v=el.type==='checkbox'?el.checked:el.value;setK(cur,el.dataset.k,v);if(el.dataset.k==='birth')syncAge();dirty=true;$('#saveMsg').textContent='저장하지 않은 변경이 있어요';refresh()};el.addEventListener(el.type==='checkbox'||el.tagName==='SELECT'?'change':'input',h)});
 $('#lgAdd').onclick=()=>{if(!cur)return;const d=$('#lgDate').value||KST(),s=$('#lgS').value.trim(),dd=$('#lgD').value.trim();
   const gl=$('#lgG').value.trim();if(!s&&!dd&&!gl&&!$('#lgNote').value.trim()&&!$('#lgMed').value){alert('혈압·혈당이나 상담 내용을 입력하세요.');return}
-  cur.logs.push({id:uid(),date:d,s,d:dd,g:gl,gt:gl?$('#lgGt').value:'',med:$('#lgMed').value,note:$('#lgNote').value.trim()});
-  if(s&&dd&&(!cur.bpDate||d>=cur.bpDate)){cur.bpS=s;cur.bpD=dd;cur.bpDate=d}
-  save();fill();jCount()};
-$('#add').onclick=()=>{const w=blank();W.push(w);save();openW(w.id);setTimeout(()=>$('[data-k=name]').focus(),50)};
-$('#del').onclick=()=>{if(!cur||!confirm(`${cur.name||'이 근로자'}를 관리대장에서 지울까요?`))return;W=W.filter(w=>w!==cur);cur=null;save();tab('list')};
-$('#back').onclick=()=>tab('list');
+  const lg={id:uid(),date:d,s,d:dd,g:gl,gt:gl?$('#lgGt').value:'',med:$('#lgMed').value,note:$('#lgNote').value.trim()};
+  for(const t of [cur,stored()].filter(Boolean)){t.logs.push(clone(lg));if(s&&dd&&(!t.bpDate||d>=t.bpDate)){t.bpS=s;t.bpD=dd;t.bpDate=d}}
+  if(!isNew)save();const keep=dirty;const m=$('#saveMsg').textContent;fill();dirty=keep;if(keep)$('#saveMsg').textContent=m;jCount()};
+$('#add').onclick=()=>{if(!leaveEdit())return;cur=blank();isNew=true;dirty=false;tab('edit',true);fill();setTimeout(()=>$('[data-k=name]').focus(),50)};
+function doSave(){if(!cur)return false;if(!cur.name.trim()){alert('성명을 입력하세요.');$('[data-k=name]').focus();return false}
+  cur.name=cur.name.trim();if(isNew)W.push(clone(cur));else{const i=W.findIndex(w=>w.id===cur.id);if(i>=0)W[i]=clone(cur);else W.push(clone(cur))}
+  save();isNew=false;dirty=false;return true}
+function toast(t){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.setAttribute('role','status');document.body.appendChild(e)}e.textContent=t;e.className='on';clearTimeout(e._t);e._t=setTimeout(()=>e.className='',2200)}
+function leaveEdit(){if(!cur||!(dirty||isNew&&cur.name))return true;if(confirm(`${cur.name||'새 근로자'}의 입력 내용을 저장할까요?\n[확인] 저장  [취소] 저장하지 않고 나가기`)){if(!doSave())return false;toast('저장했어요')}dirty=false;isNew=false;return true}
+$('#saveW').onclick=()=>{const n=cur&&cur.name;if(doSave()){cur=null;tab('list',true);toast(`${n} 저장했어요`)}};
+$('#del').onclick=()=>{if(!cur)return;if(isNew){if(dirty&&!confirm('입력하던 새 근로자를 지울까요?'))return}else if(!confirm(`${cur.name||'이 근로자'}를 관리대장에서 지울까요?`))return;if(!isNew){W=W.filter(w=>w.id!==cur.id);save()}cur=null;isNew=false;dirty=false;tab('list',true)};
+$('#back').onclick=()=>{if((dirty||isNew&&cur&&cur.name)&&!confirm('저장하지 않은 내용은 사라져요. 나갈까요?'))return;dirty=false;isNew=false;cur=null;tab('list',true)};
 $('#q').oninput=render;$('#fAll').onchange=render;
 
 /* ---------- 사후관리에서 불러오기 ---------- */
@@ -573,22 +589,81 @@ $$('.cf').forEach(i=>i.oninput=()=>{const v=parseFloat(i.value);if(!isNaN(v)){CF
 $('#cfReset').onclick=()=>{CF=Object.assign({},CF0);saveCf();fillCf();render()};
 
 /* ---------- 엑셀 ---------- */
+/* 내보내기 열 = 불러오기 열 (★ 표시 열은 자동 계산이라 불러올 때 무시) */
+const OX=v=>v?'O':'';
+const XCOLS=[['No',4.5,(w,j,i)=>i+1],['성명',9,w=>w.name],['생년월일',11,w=>w.birth],['나이(만)',6,(w,j)=>j.age??''],['협력사',13,w=>w.company],['공종',9,w=>w.trade],['고용형태',8,w=>w.emp],
+ ['투입일',11,w=>w.start],['투입종료일',11,w=>w.end],['수축기',6,w=>w.bpS],['이완기',6,w=>w.bpD],['혈압 측정일',11,w=>w.bpDate],
+ ['고혈압',6,w=>OX(w.dz.htn)],['당뇨',6,w=>OX(w.dz.dm)],['이상지질혈증',7,w=>OX(w.dz.dl)],['심·뇌혈관',7,w=>OX(w.dz.cv)],['기타 질환',10,w=>w.dz.other],
+ ['D1(직업성)',7,w=>OX(w.occ)],['D1 내용',12,w=>w.occWhat],['질병자',6,w=>OX(w.sick)],
+ ['일반건진 결과서',10,w=>w.gen],['유비오맥파',7,w=>w.ubio],['배치전 결과서',12,w=>w.pre],['혈압 소견서',8,w=>w.opinion],
+ ['보건관리자 승인',7,w=>OX(w.ap.hm)],['공구책임자 승인',7,w=>OX(w.ap.sec)],['안전보건책임자 승인',8,w=>OX(w.ap.saf)],['현장소장 승인',7,w=>OX(w.ap.chief)],
+ ['식별띠',6,w=>OX(w.band)],['서약서·확인서',7,w=>OX(w.pledge)],['민감군',6,w=>OX(w.season)],['비고',18,w=>({v:w.note,s:3})],
+ ['★위험도 분류',10,(w,j)=>j.group==='취약'?'일반 취약':j.group==='직업성'?'직업성질환(D1)':j.group==='해당없음'?'-':'고위험'],['★채용 판정',18,(w,j)=>({v:j.hireTxt,s:3})],['★건강상담 주기',16,(w,j)=>({v:j.cyc,s:3})],
+ ['★최근 상담일',10,(w,j)=>j.last],['★다음 상담일',12,(w,j)=>j.next+(j.late?' (지연)':'')],['★작업 제한',18,(w,j)=>({v:j.limit,s:3})]];
+const LCOLS=['No','성명','상담일','수축기','이완기','혈당(mg/dL)','혈당 측정 시점','복용약 확인','상담 내용'];
 $('#xlsx').onclick=()=>{const t=KST();const list=W.map(w=>({w,j:judge(w)})).filter(x=>x.j.vul||x.j.hire==='no'||x.j.hire==='hold');
   if(!list.length){alert('내보낼 취약근로자가 없어요.');return}
-  const rows=[[{v:'취약근로자 관리대장',s:4}],[{v:`현장: 전주 오성대우 주택재건축 정비사업    기준: 취약근로자 관리 기준(Rev.4)    출력일: ${t}`,s:5}],
-    ['No','성명','나이(만)','협력사','공종','고용형태','투입일','투입종료일','혈압\n(최고/최저)','측정일','해당 사유','위험도 분류','채용 판정','건강상담 주기','최근 상담일','다음 상담일','작업 제한','식별띠','서약서·\n확인서','민감군\n선정','비고']];
-  list.forEach(({w,j},i)=>rows.push([i+1,w.name,j.age??'',w.company,w.trade,w.emp,w.start,w.end,w.bpS||w.bpD?`${w.bpS}/${w.bpD}`:'',w.bpDate,{v:j.why.join('\n'),s:3},j.group==='취약'?'일반 취약':j.group==='직업성'?'직업성질환(D1)':j.group==='해당없음'?'-':'고위험',{v:j.hireTxt,s:3},{v:j.cyc,s:3},j.last,j.next+(j.late?' (지연)':''),{v:j.limit,s:3},w.band?'O':'',w.pledge?'O':'',w.season?'O':'',{v:w.note,s:3}]));
-  const lr=[[{v:'건강상담 기록',s:4}],['No','성명','상담일','혈압(최고/최저)','혈당(mg/dL)','복용약 확인','상담 내용']];let n=0;
-  list.forEach(({w})=>[...w.logs].sort((a,b)=>a.date<b.date?-1:1).forEach(l=>lr.push([++n,w.name,l.date,l.s||l.d?`${l.s}/${l.d}`:'',gfmt(l),l.med,{v:l.note,s:3}])));
-  makeXlsx([{name:'취약근로자 관리대장',widths:[4.5,8,6,14,9,8,10,10,9,10,26,10,20,18,10,12,20,6,7,6,18],rows,merges:['A1:U1','A2:U2'],hts:[30,20,34],freeze:3,titles:[3,3],def:ri=>ri<2?5:ri<3?2:1},
-    {name:'건강상담 기록',widths:[4.5,9,11,13,12,11,56],rows:lr,merges:['A1:G1'],hts:[30,22],freeze:2,titles:[2,2],def:ri=>ri<1?5:ri<2?2:1}],`취약근로자관리대장_${t}.xlsx`)};
+  const n=XCOLS.length,L=colL(n-1);
+  const rows=[[{v:'취약근로자 관리대장',s:4}],[{v:`현장: 전주 오성대우 주택재건축 정비사업    기준: 취약근로자 관리 기준(Rev.4)    출력일: ${t}    ※ 아래에 근로자를 추가해 [엑셀 불러오기] 하면 새 근로자만 들어가요. O 표시 = 해당, ★ 열은 자동 계산`,s:5}],XCOLS.map(c=>c[0])];
+  list.forEach(({w,j},i)=>rows.push(XCOLS.map(c=>c[2](w,j,i))));
+  const lr=[[{v:'건강상담 기록',s:4}],LCOLS];let k=0;
+  list.forEach(({w})=>[...w.logs].sort((a,b)=>a.date<b.date?-1:1).forEach(l=>lr.push([++k,w.name,l.date,l.s,l.d,l.g||'',l.gt||'',l.med,{v:l.note,s:3}])));
+  makeXlsx([{name:'취약근로자 관리대장',widths:XCOLS.map(c=>c[1]),rows,merges:[`A1:${L}1`,`A2:${L}2`],hts:[30,20,34],freeze:3,titles:[3,3],def:ri=>ri<2?5:ri<3?2:1},
+    {name:'건강상담 기록',widths:[4.5,9,11,7,7,10,10,11,56],rows:lr,merges:['A1:I1'],hts:[30,22],freeze:2,titles:[2,2],def:ri=>ri<1?5:ri<2?2:1}],`취약근로자관리대장_${t}.xlsx`)};
+
+/* 엑셀 불러오기: 내보낸 파일에 추가한 줄만 넣기 */
+async function readXlsx(file){const z=await JSZip.loadAsync(await file.arrayBuffer());const P=new DOMParser();
+  const xml=async p=>{const f=z.file(p);return f?P.parseFromString(await f.async('string'),'application/xml'):null};
+  const ss=[];const sx=await xml('xl/sharedStrings.xml');if(sx)[...sx.getElementsByTagName('si')].forEach(si=>ss.push([...si.getElementsByTagName('t')].map(t=>t.textContent).join('')));
+  const wb=await xml('xl/workbook.xml'),rel=await xml('xl/_rels/workbook.xml.rels');const rmap={};[...rel.getElementsByTagName('Relationship')].forEach(r=>rmap[r.getAttribute('Id')]=r.getAttribute('Target'));
+  const out={};for(const sh of [...wb.getElementsByTagName('sheet')]){let tg=rmap[sh.getAttribute('r:id')||sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id')]||'';tg=tg.replace(/^\/?xl\//,'').replace(/^\//,'');
+    const d=await xml('xl/'+tg);if(!d)continue;const rows=[];
+    for(const r of [...d.getElementsByTagName('row')]){const ri=+r.getAttribute('r')-1;const row=rows[ri]=[];
+      for(const c of [...r.getElementsByTagName('c')]){const ref=c.getAttribute('r')||'';const col=ref.replace(/\d+/g,'').split('').reduce((a,ch)=>a*26+ch.charCodeAt(0)-64,0)-1;const t=c.getAttribute('t');let v='';
+        if(t==='s'){const x=c.getElementsByTagName('v')[0];v=x?ss[+x.textContent]??'':''}else if(t==='inlineStr'){v=[...c.getElementsByTagName('t')].map(x=>x.textContent).join('')}else{const x=c.getElementsByTagName('v')[0];v=x?x.textContent:'';if(t!=='str'&&t!=='b'&&v!==''&&!isNaN(v))v=+v}
+        row[col]=v}}
+    out[sh.getAttribute('name')]=rows}
+  return out}
+const xDate=v=>{if(v===''||v==null)return '';if(typeof v==='number'&&v>20000&&v<80000){const d=new Date(Date.UTC(1899,11,30)+v*864e5);return d.toISOString().slice(0,10)}const m=String(v).trim().match(/^(\d{4})[.\-/년\s]+(\d{1,2})[.\-/월\s]+(\d{1,2})/);return m?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:''};
+const xBool=v=>/^(o|ㅇ|○|●|◎|y|yes|예|v|✔|✓|true|1)$/i.test(String(v??'').trim());
+const xStr=v=>String(v??'').trim();
+const nkey=s=>xStr(s).replace(/\s/g,'').toLowerCase();
+$('#xlsxIn').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  let book;try{book=await readXlsx(f)}catch(err){console.error(err);alert('엑셀 파일을 읽지 못했어요. [엑셀 내보내기]로 받은 .xlsx 파일인지 확인해 주세요.');return}
+  const findHdr=rows=>{for(let i=0;i<Math.min(rows.length,15);i++){const r=rows[i]||[];if(r.some(c=>nkey(c)==='성명'))return i}return -1};
+  const names=Object.keys(book);const main=book[names.find(n=>/관리대장/.test(n))||names[0]]||[];const hi=findHdr(main);
+  if(hi<0){alert('“성명” 칸이 있는 표를 찾지 못했어요. [엑셀 내보내기]로 받은 파일에 줄을 추가해서 불러와 주세요.');return}
+  const H=(main[hi]||[]).map(nkey);const col=name=>H.indexOf(nkey(name));const g=(r,name)=>{const i=col(name);return i<0?'':r[i]};
+  let add=0,skip=0,addL=0;const keyOf=w=>nkey(w.name)+'|'+(w.birth||'')+'|'+(w.birth?'':nkey(w.company)+'|'+(w.birth?'':(w.age||'')));
+  const same=(w,o)=>nkey(w.name)===nkey(o.name)&&((w.birth&&o.birth)?w.birth===o.birth:(nkey(w.company)===nkey(o.company)&&(!w.age||!o.age||String(w.age)===String(o.age))));
+  for(const r of main.slice(hi+1)){if(!r)continue;const name=xStr(g(r,'성명'));if(!name)continue;
+    const w=blank();w.name=name;w.birth=xDate(g(r,'생년월일'));w.age=w.birth?String(ageOf(w)):xStr(g(r,'나이(만)'));w.company=xStr(g(r,'협력사'));w.trade=xStr(g(r,'공종'));
+    const emp=xStr(g(r,'고용형태'));if(['상용','일용','일용 용역'].includes(emp))w.emp=emp;
+    w.start=xDate(g(r,'투입일'))||'';w.end=xDate(g(r,'투입종료일'));w.bpS=xStr(g(r,'수축기'));w.bpD=xStr(g(r,'이완기'));w.bpDate=xDate(g(r,'혈압 측정일'));
+    w.dz={htn:xBool(g(r,'고혈압')),dm:xBool(g(r,'당뇨')),dl:xBool(g(r,'이상지질혈증')),cv:xBool(g(r,'심·뇌혈관')),other:xStr(g(r,'기타 질환'))};
+    w.occ=xBool(g(r,'D1(직업성)'));w.occWhat=xStr(g(r,'D1 내용'));w.sick=xBool(g(r,'질병자'));
+    const gen=xStr(g(r,'일반건진 결과서'));if(['제출','미제출','예외(일일 용역·일대장비)'].includes(gen))w.gen=gen;
+    const ub=xStr(g(r,'유비오맥파')).toUpperCase().slice(0,1);if(/[A-G]/.test(ub))w.ubio=ub;
+    const pre=xStr(g(r,'배치전 결과서'));if(pre==='제출')w.pre='제출';else if(/미제출/.test(pre))w.pre='미제출(당일 투입 전 실시)';
+    if(xStr(g(r,'혈압 소견서'))==='제출')w.opinion='제출';
+    w.ap={hm:xBool(g(r,'보건관리자 승인')),sec:xBool(g(r,'공구책임자 승인')),saf:xBool(g(r,'안전보건책임자 승인')),chief:xBool(g(r,'현장소장 승인'))};
+    w.band=xBool(g(r,'식별띠'));w.pledge=xBool(g(r,'서약서·확인서'));w.season=xBool(g(r,'민감군'));w.note=xStr(g(r,'비고'));
+    if(W.some(o=>same(o,w))){skip++;continue}W.push(w);add++}
+  // 상담 기록
+  const ln=names.find(n=>/상담/.test(n));if(ln){const L=book[ln];const li=findHdr(L);if(li>=0){const LH=(L[li]||[]).map(nkey);const lg=(r,n)=>{const i=LH.indexOf(nkey(n));return i<0?'':r[i]};
+    for(const r of L.slice(li+1)){if(!r)continue;const name=xStr(lg(r,'성명')),date=xDate(lg(r,'상담일'));if(!name||!date)continue;const w=W.find(o=>nkey(o.name)===nkey(name));if(!w)continue;
+      let s=xStr(lg(r,'수축기')),d=xStr(lg(r,'이완기'));const bp=xStr(lg(r,'혈압(최고/최저)'));if(!s&&bp.includes('/'))[s,d]=bp.split('/').map(x=>x.trim());
+      const lgv={id:uid(),date,s,d,g:xStr(lg(r,'혈당(mg/dL)')),gt:xStr(lg(r,'혈당 측정 시점')),med:xStr(lg(r,'복용약 확인')),note:xStr(lg(r,'상담 내용'))};
+      if(w.logs.some(o=>o.date===lgv.date&&String(o.s||'')===lgv.s&&String(o.d||'')===lgv.d&&String(o.note||'')===lgv.note))continue;w.logs.push(lgv);addL++}}}
+  save();render();jCount();
+  alert(`엑셀 불러오기 완료\n· 새 근로자 ${add}명 추가\n· 이미 있는 근로자 ${skip}명은 건너뜀 (중복)\n· 새 상담 기록 ${addL}건 추가`)};
 
 /* ---------- 백업 ---------- */
 $('#bak').onclick=()=>dl(new Blob([JSON.stringify({app:'vuln-workers',v:1,workers:W,cfg:CF},null,1)],{type:'application/json'}),`취약근로자관리대장_백업_${KST()}.json`);
 $('#res').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(!Array.isArray(j.workers))throw 0;if(!confirm(`백업의 근로자 ${j.workers.length}명으로 바꿀까요? (지금 목록은 지워져요)`))return;W=j.workers;if(j.cfg)CF=Object.assign({},CF0,j.cfg);save();saveCf();fillCf();render()}catch(err){alert('백업 파일을 읽지 못했어요.')}e.target.value=''};
 
 /* ---------- 탭 ---------- */
-function tab(p){$$('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));$$('section.pane').forEach(s=>s.classList.toggle('on',s.id==='p-'+p));if(p==='list')render();if(p==='edit')fill();window.scrollTo(0,0)}
+function tab(p,force){if(!force&&p!=='edit'&&$('#p-edit').classList.contains('on')&&!leaveEdit())return;$$('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));$$('section.pane').forEach(s=>s.classList.toggle('on',s.id==='p-'+p));if(p==='list')render();if(p==='edit')fill();window.scrollTo(0,0)}
 $$('.tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.p));
 fillCf();render();jCount();
 
